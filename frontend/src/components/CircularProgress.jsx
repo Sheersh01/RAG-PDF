@@ -14,15 +14,15 @@ const CircularProgress = ({ percentage = 0, size = 160, strokeWidth = 14 }) => {
 
   // Determine colors based on score
   const getProgressColorClass = (val) => {
-    if (val >= 80) return "stroke-emerald-500 shadow-emerald-500/20";
-    if (val >= 50) return "stroke-indigo-500 shadow-indigo-500/20";
-    return "stroke-rose-500 shadow-rose-500/20";
+    if (val >= 80) return "stroke-[#4E7C59]";
+    if (val >= 50) return "stroke-[#111111]";
+    return "stroke-red-750";
   };
 
   const getTextColorClass = (val) => {
-    if (val >= 80) return "text-emerald-400";
-    if (val >= 50) return "text-indigo-450";
-    return "text-rose-400";
+    if (val >= 80) return "text-[#4E7C59]";
+    if (val >= 50) return "text-[#111111]";
+    return "text-red-750";
   };
 
   return (
@@ -33,11 +33,11 @@ const CircularProgress = ({ percentage = 0, size = 160, strokeWidth = 14 }) => {
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          className="stroke-slate-800"
+          className="stroke-[#E8E8E6]"
           strokeWidth={strokeWidth}
           fill="transparent"
         />
-        {/* Glowing Progress Circle */}
+        {/* Progress Circle */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -48,15 +48,14 @@ const CircularProgress = ({ percentage = 0, size = 160, strokeWidth = 14 }) => {
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
           fill="transparent"
-          style={{ filter: "drop-shadow(0px 0px 6px var(--tw-shadow-color, #6366f1))" }}
         />
       </svg>
       {/* Centered Content */}
       <div className="absolute flex flex-col items-center justify-center">
-        <span className={`text-3xl font-display font-extrabold tracking-tight ${getTextColorClass(percentage)}`}>
+        <span className={`text-3xl font-display font-medium tracking-tight ${getTextColorClass(percentage)}`}>
           {percentage}%
         </span>
-        <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mt-0.5">
+        <span className="text-[10px] text-[#6B6B6B] font-semibold uppercase tracking-wider mt-0.5">
           Match Score
         </span>
       </div>

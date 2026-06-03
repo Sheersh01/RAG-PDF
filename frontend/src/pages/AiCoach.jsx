@@ -103,38 +103,38 @@ const AiCoach = () => {
   if (checkingResume) {
     return (
       <div className="space-y-6 animate-pulse font-sans max-w-4xl mx-auto h-[calc(100vh-140px)] md:h-[calc(100vh-80px)] flex flex-col">
-        <div className="border-b border-slate-800/40 pb-4 shrink-0">
-          <div className="h-8 bg-slate-800 rounded w-1/4 mb-2"></div>
-          <div className="h-4 bg-slate-800 rounded w-1/2"></div>
+        <div className="border-b border-[#E8E8E6] pb-4 shrink-0">
+          <div className="h-8 bg-[#E8E8E6] rounded w-1/4 mb-2"></div>
+          <div className="h-4 bg-[#E8E8E6] rounded w-1/2"></div>
         </div>
-        <div className="flex-1 glass-card rounded-2xl border border-slate-800/40 p-6 bg-slate-900/20 space-y-4">
+        <div className="flex-1 bg-white border border-[#E8E8E6] rounded-2xl p-6 space-y-4">
           <div className="flex gap-3 max-w-[70%] mr-auto">
-            <div className="w-9 h-9 rounded-xl bg-slate-800 shrink-0"></div>
-            <div className="h-16 bg-slate-800 rounded-2xl w-full"></div>
+            <div className="w-9 h-9 rounded-xl bg-[#E8E8E6] shrink-0"></div>
+            <div className="h-16 bg-[#E8E8E6] rounded-lg w-full"></div>
           </div>
           <div className="flex gap-3 max-w-[50%] ml-auto flex-row-reverse">
-            <div className="w-9 h-9 rounded-xl bg-slate-800 shrink-0"></div>
-            <div className="h-12 bg-slate-800 rounded-2xl w-full"></div>
+            <div className="w-9 h-9 rounded-xl bg-[#E8E8E6] shrink-0"></div>
+            <div className="h-12 bg-[#E8E8E6] rounded-lg w-full"></div>
           </div>
         </div>
-        <div className="h-14 bg-slate-800 rounded-xl shrink-0 mt-4"></div>
+        <div className="h-14 bg-white border border-[#E8E8E6] rounded-lg shrink-0 mt-4"></div>
       </div>
     );
   }
 
   if (!resumeExists) {
     return (
-      <div className="glass-card rounded-2xl border border-slate-800/60 p-10 text-center max-w-xl mx-auto my-10 space-y-6">
-        <FileWarning className="w-16 h-16 text-slate-500 mx-auto" />
+      <div className="bg-white border border-[#E8E8E6] rounded-2xl p-10 text-center max-w-xl mx-auto my-10 space-y-6 shadow-sm">
+        <FileWarning className="w-16 h-16 text-[#6B6B6B] mx-auto" />
         <div className="space-y-2">
-          <h2 className="text-2xl font-display font-extrabold text-white">No Resume Found</h2>
-          <p className="text-sm text-slate-400">
+          <h2 className="text-2xl font-display font-medium text-[#111111]">No Resume Found</h2>
+          <p className="text-sm text-[#6B6B6B]">
             You need to upload your resume before InterviewPilot can retrieve background contexts for coaching answers.
           </p>
         </div>
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-2 py-3 px-6 rounded-xl bg-indigo-650 hover:bg-indigo-600 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-500/20"
+          className="inline-flex items-center gap-2 py-2.5 px-5 rounded-lg bg-[#111111] hover:bg-black text-white font-semibold text-xs transition-all"
         >
           Go to Dashboard
         </Link>
@@ -145,18 +145,18 @@ const AiCoach = () => {
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-80px)] space-y-4 font-sans max-w-4xl mx-auto">
       {/* Page Header */}
-      <div className="border-b border-slate-800/40 pb-4 shrink-0">
-        <h1 className="text-2xl md:text-3xl font-display font-extrabold text-white tracking-tight flex items-center gap-3">
-          <MessagesSquare className="w-7 md:w-8 h-7 md:h-8 text-indigo-400" />
+      <div className="border-b border-[#E8E8E6] pb-4 shrink-0">
+        <h1 className="text-2xl md:text-3xl font-display font-medium text-[#111111] tracking-tight flex items-center gap-3">
+          <MessagesSquare className="w-6 h-6 text-[#111111]" />
           AI Coach
         </h1>
-        <p className="text-xs md:text-sm text-slate-400 mt-0.5">
+        <p className="text-xs md:text-sm text-[#6B6B6B] mt-0.5">
           Ask questions, practice interview scenarios, or get tips based on your vectorized resume profile.
         </p>
       </div>
 
       {/* Messages Thread Container */}
-      <div className="flex-1 overflow-y-auto glass-card rounded-2xl border border-slate-800/60 p-4 md:p-6 space-y-6 min-h-0 relative">
+      <div className="flex-1 overflow-y-auto bg-white border border-[#E8E8E6] rounded-2xl p-4 md:p-6 space-y-6 min-h-0 relative shadow-sm">
         <div className="space-y-6">
           {messages.map((msg, idx) => {
             const isUser = msg.sender === "user";
@@ -167,22 +167,22 @@ const AiCoach = () => {
               >
                 {/* Avatar */}
                 <div
-                  className={`w-9 h-9 rounded-xl shrink-0 flex items-center justify-center border text-white ${
+                  className={`w-9 h-9 rounded-lg shrink-0 flex items-center justify-center border text-[#111111] ${
                     isUser
-                      ? "bg-slate-800 border-slate-700 text-indigo-400"
-                      : "bg-gradient-to-tr from-indigo-500 to-purple-600 border-indigo-500 shadow-md"
+                      ? "bg-[#F8F8F6] border-[#E8E8E6]"
+                      : "bg-[#111111] border-[#111111] text-white"
                   }`}
                 >
-                  {isUser ? <User className="w-4.5 h-4.5" /> : <Brain className="w-4.5 h-4.5" />}
+                  {isUser ? <User className="w-4 h-4 text-[#111111]" /> : <Brain className="w-4 h-4 text-white" />}
                 </div>
 
                 {/* Bubble */}
                 <div className="space-y-2">
                   <div
-                    className={`p-4 rounded-2xl text-xs md:text-sm leading-relaxed whitespace-pre-wrap ${
+                    className={`p-4 rounded-lg text-xs md:text-sm leading-relaxed whitespace-pre-wrap ${
                       isUser
-                        ? "bg-indigo-600 text-white rounded-tr-none"
-                        : "bg-slate-900 border border-slate-850 text-slate-205 rounded-tl-none"
+                        ? "bg-[#111111] text-white rounded-tr-none"
+                        : "bg-[#F8F8F6] border border-[#E8E8E6] text-[#111111] rounded-tl-none"
                     }`}
                   >
                     {msg.text}
@@ -193,7 +193,7 @@ const AiCoach = () => {
                     <div className="space-y-1.5 pl-1">
                       <button
                         onClick={() => handleCitationToggle(idx)}
-                        className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-400 hover:text-indigo-300 transition-colors focus:outline-none cursor-pointer"
+                        className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#111111]/70 hover:text-[#111111] transition-colors focus:outline-none cursor-pointer"
                       >
                         <BookOpen className="w-3.5 h-3.5" />
                         {expandedCitationIndex === idx ? (
@@ -208,11 +208,11 @@ const AiCoach = () => {
                       </button>
 
                       {expandedCitationIndex === idx && (
-                        <div className="space-y-1.5 p-3 rounded-lg bg-slate-950/60 border border-slate-900 animate-slide-in">
+                        <div className="space-y-1.5 p-3 rounded-lg bg-white border border-[#E8E8E6] animate-slide-in">
                           {msg.chunks.map((chunk, cIdx) => (
                             <div
                               key={cIdx}
-                              className="text-[10.5px] leading-relaxed text-slate-400 border-l border-slate-800 pl-2 select-none"
+                              className="text-[10.5px] leading-relaxed text-[#6B6B6B] border-l border-[#E8E8E6] pl-2 select-none"
                             >
                               "{chunk}"
                             </div>
@@ -228,12 +228,12 @@ const AiCoach = () => {
 
           {sending && (
             <div className="flex gap-3 max-w-[80%] mr-auto">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 border border-indigo-500 shrink-0 flex items-center justify-center shadow-md">
-                <Brain className="w-4.5 h-4.5 text-white animate-pulse" />
+              <div className="w-9 h-9 rounded-lg bg-[#111111] border border-[#111111] shrink-0 flex items-center justify-center">
+                <Brain className="w-4 h-4 text-white animate-pulse" />
               </div>
-              <div className="bg-slate-900 border border-slate-850 py-3.5 px-4 rounded-2xl rounded-tl-none flex items-center gap-2">
-                <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                <span className="text-xs text-slate-450">AI Coach is thinking...</span>
+              <div className="bg-[#F8F8F6] border border-[#E8E8E6] py-3.5 px-4 rounded-lg rounded-tl-none flex items-center gap-2">
+                <Loader2 className="w-3.5 h-3.5 text-[#111111] animate-spin" />
+                <span className="text-xs text-[#6B6B6B]">AI Coach is thinking...</span>
               </div>
             </div>
           )}
@@ -244,8 +244,8 @@ const AiCoach = () => {
       {/* Prompts suggestions (only visible when chat starts or idle) */}
       {messages.length === 1 && !sending && (
         <div className="shrink-0 space-y-2">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1.5 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+          <span className="text-[10px] font-bold text-[#6B6B6B] uppercase tracking-wider pl-1.5 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-[#111111]" />
             Quick Starter Prompts
           </span>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -253,7 +253,7 @@ const AiCoach = () => {
               <button
                 key={i}
                 onClick={() => handleStarterClick(pText)}
-                className="p-3 text-left rounded-xl bg-slate-900/30 hover:bg-slate-900/80 border border-slate-850 hover:border-slate-750 text-[11px] md:text-xs text-slate-350 leading-relaxed transition-all cursor-pointer"
+                className="p-3 text-left rounded-lg bg-white hover:bg-[#F8F8F6] border border-[#E8E8E6] hover:border-[#111111]/30 text-[11px] md:text-xs text-[#6B6B6B] hover:text-[#111111] leading-relaxed transition-all cursor-pointer shadow-sm"
               >
                 {pText}
               </button>
@@ -269,15 +269,15 @@ const AiCoach = () => {
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           placeholder="Ask a question about your resume capabilities..."
-          className="flex-1 py-3.5 px-4 rounded-xl text-sm glass-input text-slate-200 placeholder-slate-600"
+          className="flex-1 py-2.5 px-4 rounded-lg text-sm border border-[#E8E8E6] focus:border-[#111111] outline-none text-[#111111] placeholder-[#6B6B6B]/40 bg-white"
           disabled={sending}
         />
         <button
           type="submit"
           disabled={sending || !inputMessage.trim()}
-          className="py-3.5 px-5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold text-sm shadow-md hover:shadow-indigo-550/20 flex items-center justify-center shrink-0 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+          className="py-2.5 px-5 rounded-lg bg-[#111111] hover:bg-black text-white font-semibold text-sm flex items-center justify-center shrink-0 disabled:opacity-50 disabled:pointer-events-none transition-all cursor-pointer"
         >
-          <Send className="w-4.5 h-4.5" />
+          <Send className="w-4 h-4" />
         </button>
       </form>
     </div>

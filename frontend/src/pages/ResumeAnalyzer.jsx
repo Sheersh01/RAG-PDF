@@ -69,35 +69,35 @@ const ResumeAnalyzer = () => {
   if (checkingResume) {
     return (
       <div className="space-y-6 animate-pulse font-sans">
-        <div className="flex items-center justify-between border-b border-slate-800/40 pb-6">
+        <div className="flex items-center justify-between border-b border-[#E8E8E6] pb-6">
           <div className="space-y-2 w-full">
-            <div className="h-8 bg-slate-800 rounded w-1/3"></div>
-            <div className="h-4 bg-slate-800 rounded w-1/2"></div>
+            <div className="h-8 bg-[#E8E8E6] rounded w-1/3"></div>
+            <div className="h-4 bg-[#E8E8E6] rounded w-1/2"></div>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="glass-card rounded-2xl border border-slate-800/40 p-6 h-80 bg-slate-900/20">
-            <div className="h-6 bg-slate-800 rounded w-1/2 mb-4"></div>
+          <div className="bg-white border border-[#E8E8E6] rounded-2xl p-6 h-80">
+            <div className="h-6 bg-[#E8E8E6] rounded w-1/2 mb-4"></div>
             <div className="space-y-3">
-              <div className="h-3 bg-slate-800 rounded w-full"></div>
-              <div className="h-3 bg-slate-800 rounded w-5/6"></div>
-              <div className="h-3 bg-slate-800 rounded w-4/5"></div>
+              <div className="h-3 bg-[#E8E8E6] rounded w-full"></div>
+              <div className="h-3 bg-[#E8E8E6] rounded w-5/6"></div>
+              <div className="h-3 bg-[#E8E8E6] rounded w-4/5"></div>
             </div>
           </div>
-          <div className="glass-card rounded-2xl border border-slate-800/40 p-6 h-80 bg-slate-900/20">
-            <div className="h-6 bg-slate-800 rounded w-1/2 mb-4"></div>
+          <div className="bg-white border border-[#E8E8E6] rounded-2xl p-6 h-80">
+            <div className="h-6 bg-[#E8E8E6] rounded w-1/2 mb-4"></div>
             <div className="space-y-3">
-              <div className="h-3 bg-slate-800 rounded w-full"></div>
-              <div className="h-3 bg-slate-800 rounded w-5/6"></div>
-              <div className="h-3 bg-slate-800 rounded w-4/5"></div>
+              <div className="h-3 bg-[#E8E8E6] rounded w-full"></div>
+              <div className="h-3 bg-[#E8E8E6] rounded w-5/6"></div>
+              <div className="h-3 bg-[#E8E8E6] rounded w-4/5"></div>
             </div>
           </div>
-          <div className="glass-card rounded-2xl border border-slate-800/40 p-6 h-80 bg-slate-900/20">
-            <div className="h-6 bg-slate-800 rounded w-1/2 mb-4"></div>
+          <div className="bg-white border border-[#E8E8E6] rounded-2xl p-6 h-80">
+            <div className="h-6 bg-[#E8E8E6] rounded w-1/2 mb-4"></div>
             <div className="space-y-3">
-              <div className="h-3 bg-slate-800 rounded w-full"></div>
-              <div className="h-3 bg-slate-800 rounded w-5/6"></div>
-              <div className="h-3 bg-slate-800 rounded w-4/5"></div>
+              <div className="h-3 bg-[#E8E8E6] rounded w-full"></div>
+              <div className="h-3 bg-[#E8E8E6] rounded w-5/6"></div>
+              <div className="h-3 bg-[#E8E8E6] rounded w-4/5"></div>
             </div>
           </div>
         </div>
@@ -107,17 +107,17 @@ const ResumeAnalyzer = () => {
 
   if (!resumeExists) {
     return (
-      <div className="glass-card rounded-2xl border border-slate-800/60 p-10 text-center max-w-xl mx-auto my-10 space-y-6">
-        <FileWarning className="w-16 h-16 text-slate-500 mx-auto" />
+      <div className="bg-white border border-[#E8E8E6] rounded-2xl p-10 text-center max-w-xl mx-auto my-10 space-y-6 shadow-sm">
+        <FileWarning className="w-16 h-16 text-[#6B6B6B] mx-auto" />
         <div className="space-y-2">
-          <h2 className="text-2xl font-display font-extrabold text-white">No Resume Found</h2>
-          <p className="text-sm text-slate-400">
+          <h2 className="text-2xl font-display font-medium text-[#111111]">No Resume Found</h2>
+          <p className="text-sm text-[#6B6B6B]">
             You need to upload your resume before InterviewPilot can analyze its strengths, weaknesses, and improvement items.
           </p>
         </div>
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-2 py-3 px-6 rounded-xl bg-indigo-650 hover:bg-indigo-600 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-500/20"
+          className="inline-flex items-center gap-2 py-2.5 px-5 rounded-lg bg-[#111111] hover:bg-black text-white font-semibold text-xs transition-all"
         >
           Go to Dashboard
         </Link>
@@ -128,22 +128,22 @@ const ResumeAnalyzer = () => {
   return (
     <div className="space-y-8 animate-fade-in font-sans">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/40 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E8E8E6] pb-6">
         <div>
-          <h1 className="text-3xl font-display font-extrabold text-white tracking-tight flex items-center gap-3">
-            <Sparkles className="w-8 h-8 text-indigo-400" />
+          <h1 className="text-3xl font-display font-medium text-[#111111] tracking-tight flex items-center gap-3">
+            <Sparkles className="w-6 h-6 text-[#111111]" />
             Resume Analyzer
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-[#6B6B6B] mt-1">
             Grounded review of your accomplishments, formatting structures, and potential improvements.
           </p>
         </div>
         {!analyzing && analysis && (
           <button
             onClick={runAnalysis}
-            className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl border border-slate-800 hover:bg-slate-900/50 text-slate-300 text-sm font-semibold transition-all cursor-pointer"
+            className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-[#E8E8E6] hover:bg-white text-[#111111] text-xs font-semibold transition-all cursor-pointer"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-3.5 h-3.5" />
             Re-Analyze
           </button>
         )}
@@ -151,102 +151,102 @@ const ResumeAnalyzer = () => {
 
       {analyzing ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
-          <Loader2 className="w-12 h-12 text-indigo-550 animate-spin" />
+          <Loader2 className="w-8 h-8 text-[#111111] animate-spin" />
           <div className="text-center space-y-1.5">
-            <h3 className="text-sm font-semibold text-slate-205">Reviewing resume vectors...</h3>
-            <p className="text-xs text-slate-500">Evaluating formatting, highlights, and verb actions</p>
+            <h3 className="text-sm font-semibold text-[#111111]">Reviewing resume vectors...</h3>
+            <p className="text-xs text-[#6B6B6B]">Evaluating formatting, highlights, and verb actions</p>
           </div>
         </div>
       ) : analysis ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Strengths Card */}
-          <div className="glass-card rounded-2xl border border-slate-800/60 p-6 flex flex-col h-full bg-emerald-950/5 hover:border-emerald-500/20 transition-all">
-            <div className="flex items-center gap-3 border-b border-slate-800/40 pb-4 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-405 flex items-center justify-center">
+          <div className="bg-white border border-[#E8E8E6] rounded-2xl p-6 flex flex-col h-full shadow-sm hover:border-[#111111]/30 transition-all">
+            <div className="flex items-center gap-3 border-b border-[#E8E8E6] pb-4 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[#4E7C59]/10 text-[#4E7C59] flex items-center justify-center">
                 <CheckCircle className="w-5.5 h-5.5" />
               </div>
               <div>
-                <h3 className="font-display font-bold text-base text-emerald-400">Core Strengths</h3>
-                <span className="text-[10px] text-slate-450 font-medium">Valid achievements identified</span>
+                <h3 className="font-display font-semibold text-lg text-[#4E7C59]">Core Strengths</h3>
+                <span className="text-[10px] text-[#6B6B6B] font-medium">Valid achievements identified</span>
               </div>
             </div>
             {analysis.strengths.length > 0 ? (
               <ul className="space-y-3.5 flex-1">
                 {analysis.strengths.map((item, index) => (
-                  <li key={index} className="flex gap-3 text-xs md:text-sm text-slate-300 leading-relaxed">
-                    <span className="text-emerald-500 select-none">•</span>
+                  <li key={index} className="flex gap-3 text-xs md:text-sm text-[#111111] leading-relaxed">
+                    <span className="text-[#4E7C59] select-none">•</span>
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <div className="text-center py-8 text-slate-500 text-xs italic">
+              <div className="text-center py-8 text-[#6B6B6B] text-xs italic">
                 No distinct strengths parsed from the context.
               </div>
             )}
           </div>
 
           {/* Weaknesses Card */}
-          <div className="glass-card rounded-2xl border border-slate-800/60 p-6 flex flex-col h-full bg-rose-950/5 hover:border-rose-500/20 transition-all">
-            <div className="flex items-center gap-3 border-b border-slate-800/40 pb-4 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-455 flex items-center justify-center">
+          <div className="bg-white border border-[#E8E8E6] rounded-2xl p-6 flex flex-col h-full shadow-sm hover:border-[#111111]/30 transition-all">
+            <div className="flex items-center gap-3 border-b border-[#E8E8E6] pb-4 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-700 flex items-center justify-center">
                 <AlertTriangle className="w-5.5 h-5.5" />
               </div>
               <div>
-                <h3 className="font-display font-bold text-base text-rose-400">Critical Gaps</h3>
-                <span className="text-[10px] text-slate-450 font-medium">Potential areas of concern</span>
+                <h3 className="font-display font-semibold text-lg text-red-700">Critical Gaps</h3>
+                <span className="text-[10px] text-[#6B6B6B] font-medium">Potential areas of concern</span>
               </div>
             </div>
             {analysis.weaknesses.length > 0 ? (
               <ul className="space-y-3.5 flex-1">
                 {analysis.weaknesses.map((item, index) => (
-                  <li key={index} className="flex gap-3 text-xs md:text-sm text-slate-300 leading-relaxed">
-                    <span className="text-rose-500 select-none">•</span>
+                  <li key={index} className="flex gap-3 text-xs md:text-sm text-[#111111] leading-relaxed">
+                    <span className="text-red-700 select-none">•</span>
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <div className="text-center py-8 text-slate-500 text-xs italic">
+              <div className="text-center py-8 text-[#6B6B6B] text-xs italic">
                 No major weaknesses found in the resume. Good job!
               </div>
             )}
           </div>
 
           {/* Improvements Card */}
-          <div className="glass-card rounded-2xl border border-slate-800/60 p-6 flex flex-col h-full bg-indigo-950/5 hover:border-indigo-500/20 transition-all">
-            <div className="flex items-center gap-3 border-b border-slate-800/40 pb-4 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-455 flex items-center justify-center">
+          <div className="bg-white border border-[#E8E8E6] rounded-2xl p-6 flex flex-col h-full shadow-sm hover:border-[#111111]/30 transition-all">
+            <div className="flex items-center gap-3 border-b border-[#E8E8E6] pb-4 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[#111111]/5 text-[#111111] flex items-center justify-center">
                 <ArrowUpCircle className="w-5.5 h-5.5" />
               </div>
               <div>
-                <h3 className="font-display font-bold text-base text-indigo-400">Improvements</h3>
-                <span className="text-[10px] text-slate-450 font-medium">Actionable adjustments</span>
+                <h3 className="font-display font-semibold text-lg text-[#111111]">Improvements</h3>
+                <span className="text-[10px] text-[#6B6B6B] font-medium">Actionable adjustments</span>
               </div>
             </div>
             {analysis.improvements.length > 0 ? (
               <ul className="space-y-3.5 flex-1">
                 {analysis.improvements.map((item, index) => (
-                  <li key={index} className="flex gap-3 text-xs md:text-sm text-slate-300 leading-relaxed">
-                    <span className="text-indigo-500 select-none">•</span>
+                  <li key={index} className="flex gap-3 text-xs md:text-sm text-[#111111] leading-relaxed">
+                    <span className="text-[#111111] select-none">•</span>
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <div className="text-center py-8 text-slate-500 text-xs italic">
+              <div className="text-center py-8 text-[#6B6B6B] text-xs italic">
                 No immediate improvements suggested.
               </div>
             )}
           </div>
         </div>
       ) : (
-        <div className="text-center py-20 glass-card rounded-2xl border border-slate-850">
-          <Info className="w-12 h-12 text-slate-500 mx-auto mb-4" />
-          <p className="text-sm text-slate-400">Ready to analyze your resume.</p>
+        <div className="text-center py-20 bg-white border border-[#E8E8E6] rounded-2xl shadow-sm">
+          <Info className="w-12 h-12 text-[#6B6B6B] mx-auto mb-4" />
+          <p className="text-sm text-[#6B6B6B]">Ready to analyze your resume.</p>
           <button
             onClick={runAnalysis}
-            className="mt-4 px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold cursor-pointer"
+            className="mt-4 px-5 py-2 bg-[#111111] hover:bg-black text-white rounded-lg text-xs font-semibold cursor-pointer"
           >
             Trigger Analysis
           </button>

@@ -60,25 +60,25 @@ const ResumeSearch = () => {
   if (checkingResume) {
     return (
       <div className="flex flex-col items-center justify-center py-20 font-sans">
-        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
-        <p className="text-sm text-slate-400">Verifying resume index status...</p>
+        <Loader2 className="w-8 h-8 text-[#111111] animate-spin mb-4" />
+        <p className="text-sm text-[#6B6B6B]">Verifying resume index status...</p>
       </div>
     );
   }
 
   if (!resumeExists) {
     return (
-      <div className="glass-card rounded-2xl border border-slate-800/60 p-10 text-center max-w-xl mx-auto my-10 space-y-6">
-        <FileWarning className="w-16 h-16 text-slate-500 mx-auto" />
+      <div className="bg-white border border-[#E8E8E6] rounded-2xl p-10 text-center max-w-xl mx-auto my-10 space-y-6 shadow-sm">
+        <FileWarning className="w-16 h-16 text-[#6B6B6B] mx-auto" />
         <div className="space-y-2">
-          <h2 className="text-2xl font-display font-extrabold text-white">No Resume Found</h2>
-          <p className="text-sm text-slate-400">
+          <h2 className="text-2xl font-display font-medium text-[#111111]">No Resume Found</h2>
+          <p className="text-sm text-[#6B6B6B]">
             You need to upload your resume before InterviewPilot can search its vector chunks.
           </p>
         </div>
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-2 py-3 px-6 rounded-xl bg-indigo-650 hover:bg-indigo-600 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-500/20"
+          className="inline-flex items-center gap-2 py-2.5 px-5 rounded-lg bg-[#111111] hover:bg-black text-white font-semibold text-xs transition-all"
         >
           Go to Dashboard
         </Link>
@@ -89,23 +89,23 @@ const ResumeSearch = () => {
   return (
     <div className="space-y-8 animate-fade-in font-sans max-w-4xl mx-auto">
       {/* Page Header */}
-      <div className="flex items-center gap-4 border-b border-slate-800/40 pb-6">
+      <div className="flex items-center gap-4 border-b border-[#E8E8E6] pb-6">
         <div>
-          <h1 className="text-3xl font-display font-extrabold text-white tracking-tight flex items-center gap-3">
-            <Database className="w-8 h-8 text-indigo-400" />
+          <h1 className="text-3xl font-display font-medium text-[#111111] tracking-tight flex items-center gap-3">
+            <Database className="w-6 h-6 text-[#111111]" />
             Resume Chunk Search
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-[#6B6B6B] mt-1">
             Directly query the Atlas vector database for fragments from your parsed resume.
           </p>
         </div>
       </div>
 
       {/* Query Bar */}
-      <div className="glass-card rounded-2xl border border-slate-800/60 p-6">
+      <div className="bg-white border border-[#E8E8E6] rounded-2xl p-6 shadow-sm">
         <form onSubmit={handleSearchSubmit} className="flex gap-2">
           <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6B6B]">
               <Search className="w-4.5 h-4.5" />
             </div>
             <input
@@ -113,18 +113,18 @@ const ResumeSearch = () => {
               placeholder="e.g. AWS deployments, React experience, university education..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3.5 rounded-xl text-sm glass-input text-slate-200 placeholder-slate-650"
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg text-sm border border-[#E8E8E6] focus:border-[#111111] outline-none text-[#111111] placeholder-[#6B6B6B]/40 bg-white"
               disabled={searching}
             />
           </div>
           <button
             type="submit"
             disabled={searching || !query.trim()}
-            className="py-3.5 px-6 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold text-sm shadow-md hover:shadow-indigo-500/20 flex items-center gap-2 transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+            className="py-2.5 px-5 rounded-lg bg-[#111111] hover:bg-black text-white font-semibold text-sm flex items-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
           >
             {searching ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 Querying...
               </>
             ) : (
@@ -140,21 +140,21 @@ const ResumeSearch = () => {
       <div className="space-y-4">
         {searching ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-3">
-            <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
-            <p className="text-xs text-slate-450">Executing similarity metrics query...</p>
+            <Loader2 className="w-8 h-8 text-[#111111] animate-spin" />
+            <p className="text-xs text-[#6B6B6B]">Executing similarity metrics query...</p>
           </div>
         ) : chunks.length > 0 ? (
           <div className="space-y-4">
-            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
+            <span className="text-[10px] font-bold text-[#111111] uppercase tracking-wider pl-1 flex items-center gap-1.5">
               Vector Matches Found ({chunks.length})
             </span>
             <div className="space-y-3">
               {chunks.map((content, index) => (
                 <div
                   key={index}
-                  className="glass-card rounded-xl border border-slate-850 p-4 md:p-5 text-xs md:text-sm leading-relaxed text-slate-205 border-l-4 border-l-indigo-500 shadow-sm relative overflow-hidden"
+                  className="bg-white border border-[#E8E8E6] rounded-lg p-4 md:p-5 text-xs md:text-sm leading-relaxed text-[#111111] border-l-4 border-l-[#111111] shadow-sm relative overflow-hidden"
                 >
-                  <div className="absolute top-0 right-0 p-2 bg-slate-900 border-b border-l border-slate-850 rounded-bl-lg text-[9px] font-bold text-slate-500 uppercase">
+                  <div className="absolute top-0 right-0 p-2 bg-[#F8F8F6] border-b border-l border-[#E8E8E6] rounded-bl-lg text-[9px] font-bold text-[#6B6B6B] uppercase">
                     Rank #{index + 1}
                   </div>
                   <p className="pr-12">{content}</p>
@@ -163,18 +163,18 @@ const ResumeSearch = () => {
             </div>
           </div>
         ) : searched ? (
-          <div className="glass-card rounded-2xl border border-slate-850 p-10 text-center text-slate-500 flex flex-col items-center justify-center">
-            <Info className="w-12 h-12 text-slate-700 mb-4" />
-            <h3 className="font-semibold text-sm text-slate-400">No Vector Matches</h3>
-            <p className="text-xs text-slate-500 max-w-xs mt-1.5 leading-relaxed">
+          <div className="bg-white border border-[#E8E8E6] rounded-2xl p-10 text-center text-[#6B6B6B] flex flex-col items-center justify-center shadow-sm">
+            <Info className="w-12 h-12 text-[#6B6B6B] mb-4" />
+            <h3 className="font-semibold text-sm text-[#111111]">No Vector Matches</h3>
+            <p className="text-xs text-[#6B6B6B] max-w-xs mt-1.5 leading-relaxed">
               No matching resume chunks met the threshold index for the query: "{query}"
             </p>
           </div>
         ) : (
-          <div className="glass-card rounded-2xl border border-slate-850 p-10 text-center text-slate-550 flex flex-col items-center justify-center">
-            <Search className="w-12 h-12 text-slate-800 mb-4" />
-            <h3 className="font-semibold text-sm text-slate-405">Query Database</h3>
-            <p className="text-xs text-slate-505 max-w-xs mt-1.5 leading-relaxed">
+          <div className="bg-white border border-[#E8E8E6] rounded-2xl p-10 text-center text-[#6B6B6B] flex flex-col items-center justify-center shadow-sm">
+            <Search className="w-12 h-12 text-[#6B6B6B] mb-4" />
+            <h3 className="font-semibold text-sm text-[#111111]">Query Database</h3>
+            <p className="text-xs text-[#6B6B6B] max-w-xs mt-1.5 leading-relaxed">
               Enter keywords or sentences above to retrieve exact fragments retrieved by similarity scores.
             </p>
           </div>
