@@ -77,3 +77,50 @@ export const getResume = async (req, res) => {
   }
 };
 
+export const getResumeText = async (req, res) => {
+  try {
+    const document = await Document.findOne({
+      userId: req.user.id,
+      type: "resume",
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: "No resume found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      extractedText: document.extractedText,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const deleteResume = async (req, res) => {
+  try {
+    const existingResumes = await Document.find({ userId: req.user.id, type: "resume" });
+    if (existingResumes.length > 0) {
+      const docIds = existingResumes.map(doc => doc._id);
+      await DocumentChunk.deleteMany({ documentId: { $in: docIds } });
+      await Document.deleteMany({ _id: { $in: docIds } });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Workspace resume purged successfully.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+

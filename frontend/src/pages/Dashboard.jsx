@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { documentApi } from "../services/api";
+import { useAuthStore } from "../store/authStore";
 import toast from "react-hot-toast";
 import {
   FileText,
@@ -15,16 +16,23 @@ import {
   ChevronRight,
   TrendingUp,
   Clock,
+  X,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
+  const { user } = useAuthStore();
   const [resume, setResume] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadStage, setUploadStage] = useState(""); // 'parsing' | 'splitting' | 'embedding' | 'indexing' | 'done' | ''
   const [targetRole, setTargetRole] = useState("");
+
+  // Preview Resume states
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [extractedText, setExtractedText] = useState("");
+  const [loadingText, setLoadingText] = useState(false);
 
   const fetchResume = useCallback(async () => {
     try {
@@ -46,6 +54,49 @@ const Dashboard = () => {
   useEffect(() => {
     fetchResume();
   }, [fetchResume]);
+
+  useEffect(() => {
+    if (user) {
+      const savedRole = localStorage.getItem(`targetRole_${user._id}`);
+      if (savedRole) {
+        setTargetRole(savedRole);
+      }
+    }
+  }, [user]);
+
+  // Listen for storage events to sync target role preference dynamically
+  useEffect(() => {
+    const handleStorageChange = () => {
+      if (user) {
+        const savedRole = localStorage.getItem(`targetRole_${user._id}`);
+        if (savedRole) {
+          setTargetRole(savedRole);
+        }
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [user]);
+
+  const handleOpenPreview = async () => {
+    setIsPreviewOpen(true);
+    if (extractedText) return; // already loaded
+    
+    setLoadingText(true);
+    try {
+      const data = await documentApi.getResumeText();
+      if (data.success && data.extractedText) {
+        setExtractedText(data.extractedText);
+      } else {
+        toast.error("Failed to fetch resume text content.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Error fetching resume text.");
+    } finally {
+      setLoadingText(false);
+    }
+  };
 
   const onDrop = useCallback(async (acceptedFiles) => {
     if (acceptedFiles.length === 0) return;
@@ -317,12 +368,12 @@ const Dashboard = () => {
                   Start Interview
                   <span className="text-xs text-slate-400">&rarr;</span>
                 </Link>
-                <Link
-                  to="/resume-analyzer"
-                  className="text-sm font-semibold text-[#111111] hover:underline"
+                <button
+                  onClick={handleOpenPreview}
+                  className="text-sm font-semibold text-[#111111] hover:underline cursor-pointer bg-transparent border-none p-0"
                 >
                   Preview Resume
-                </Link>
+                </button>
               </div>
             </div>
 
@@ -419,44 +470,44 @@ const Dashboard = () => {
               <h2 className="text-lg font-bold text-[#111111] pl-1">Insights</h2>
               <div className="border border-[#E8E8E6] bg-white rounded-2xl divide-y divide-[#E8E8E6] overflow-hidden">
                 
-                <div className="p-4 flex items-center justify-between gap-4 hover:bg-[#F8F8F6]/30 transition-colors">
+                <Link to="/resume-analyzer" className="p-4 flex items-center justify-between gap-4 hover:bg-[#F8F8F6]/30 transition-colors cursor-pointer group">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#F8F8F6] rounded text-[#111111]">
+                    <div className="p-2 bg-[#F8F8F6] rounded text-[#111111] group-hover:bg-[#E8E8E6] transition-colors">
                       <TrendingUp className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-[#111111]">Strong impact in your experience section</h4>
+                      <h4 className="text-sm font-semibold text-[#111111] group-hover:underline">Strong impact in your experience section</h4>
                       <p className="text-[10px] text-[#6B6B6B] mt-0.5">Quantified results stand out well.</p>
                     </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-[#6B6B6B]" />
-                </div>
+                </Link>
 
-                <div className="p-4 flex items-center justify-between gap-4 hover:bg-[#F8F8F6]/30 transition-colors">
+                <Link to="/resume-analyzer" className="p-4 flex items-center justify-between gap-4 hover:bg-[#F8F8F6]/30 transition-colors cursor-pointer group">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#F8F8F6] rounded text-[#111111]">
+                    <div className="p-2 bg-[#F8F8F6] rounded text-[#111111] group-hover:bg-[#E8E8E6] transition-colors">
                       <FileText className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-[#111111]">Add more metrics to projects</h4>
+                      <h4 className="text-sm font-semibold text-[#111111] group-hover:underline">Add more metrics to projects</h4>
                       <p className="text-[10px] text-[#6B6B6B] mt-0.5">Include numbers and percentages.</p>
                     </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-[#6B6B6B]" />
-                </div>
+                </Link>
 
-                <div className="p-4 flex items-center justify-between gap-4 hover:bg-[#F8F8F6]/30 transition-colors">
+                <Link to="/ats-matcher" className="p-4 flex items-center justify-between gap-4 hover:bg-[#F8F8F6]/30 transition-colors cursor-pointer group">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#F8F8F6] rounded text-[#111111]">
+                    <div className="p-2 bg-[#F8F8F6] rounded text-[#111111] group-hover:bg-[#E8E8E6] transition-colors">
                       <Sparkles className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-[#111111]">Consider adding leadership keywords</h4>
+                      <h4 className="text-sm font-semibold text-[#111111] group-hover:underline">Consider adding leadership keywords</h4>
                       <p className="text-[10px] text-[#6B6B6B] mt-0.5">Improve relevance for senior roles.</p>
                     </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-[#6B6B6B]" />
-                </div>
+                </Link>
 
               </div>
             </div>
@@ -466,53 +517,100 @@ const Dashboard = () => {
               <h2 className="text-lg font-bold text-[#111111] pl-1">Recent Activity</h2>
               <div className="border border-[#E8E8E6] bg-white rounded-2xl p-6 space-y-6">
                 
-                <div className="flex items-start justify-between gap-4">
+                <Link to="/resume-analyzer" className="flex items-start justify-between gap-4 hover:opacity-85 transition-opacity cursor-pointer group">
                   <div className="flex gap-3">
-                    <FileText className="w-4 h-4 text-[#6B6B6B] mt-0.5" />
+                    <FileText className="w-4 h-4 text-[#6B6B6B] mt-0.5 group-hover:text-[#111111] transition-colors" />
                     <div>
-                      <h4 className="text-xs font-semibold text-[#111111]">Resume analyzed</h4>
+                      <h4 className="text-xs font-semibold text-[#111111] group-hover:underline">Resume analyzed</h4>
                       <p className="text-[10px] text-[#6B6B6B] mt-0.5">87 score • 92% ATS match</p>
                     </div>
                   </div>
                   <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">2 days ago</span>
-                </div>
+                </Link>
 
-                <div className="flex items-start justify-between gap-4">
+                <Link to="/mock-interview" className="flex items-start justify-between gap-4 hover:opacity-85 transition-opacity cursor-pointer group">
                   <div className="flex gap-3">
-                    <BrainCircuit className="w-4 h-4 text-[#6B6B6B] mt-0.5" />
+                    <BrainCircuit className="w-4 h-4 text-[#6B6B6B] mt-0.5 group-hover:text-[#111111] transition-colors" />
                     <div>
-                      <h4 className="text-xs font-semibold text-[#111111]">Mock interview completed</h4>
+                      <h4 className="text-xs font-semibold text-[#111111] group-hover:underline">Mock interview completed</h4>
                       <p className="text-[10px] text-[#6B6B6B] mt-0.5">Product Manager • Behavioral</p>
                     </div>
                   </div>
                   <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">3 days ago</span>
-                </div>
+                </Link>
 
-                <div className="flex items-start justify-between gap-4">
+                <Link to="/ats-matcher" className="flex items-start justify-between gap-4 hover:opacity-85 transition-opacity cursor-pointer group">
                   <div className="flex gap-3">
-                    <SlidersHorizontal className="w-4 h-4 text-[#6B6B6B] mt-0.5" />
+                    <SlidersHorizontal className="w-4 h-4 text-[#6B6B6B] mt-0.5 group-hover:text-[#111111] transition-colors" />
                     <div>
-                      <h4 className="text-xs font-semibold text-[#111111]">ATS optimization applied</h4>
+                      <h4 className="text-xs font-semibold text-[#111111] group-hover:underline">ATS optimization applied</h4>
                       <p className="text-[10px] text-[#6B6B6B] mt-0.5">23 issues fixed</p>
                     </div>
                   </div>
                   <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">5 days ago</span>
-                </div>
+                </Link>
 
-                <div className="flex items-start justify-between gap-4">
+                <button onClick={handleOpenPreview} className="w-full flex items-start justify-between gap-4 hover:opacity-85 transition-opacity cursor-pointer group text-left bg-transparent border-none p-0">
                   <div className="flex gap-3">
-                    <Clock className="w-4 h-4 text-[#6B6B6B] mt-0.5" />
+                    <Clock className="w-4 h-4 text-[#6B6B6B] mt-0.5 group-hover:text-[#111111] transition-colors" />
                     <div>
-                      <h4 className="text-xs font-semibold text-[#111111]">Resume uploaded</h4>
-                      <p className="text-[10px] text-[#6B6B6B] mt-0.5">PM_Resume.pdf</p>
+                      <h4 className="text-xs font-semibold text-[#111111] group-hover:underline">Resume uploaded</h4>
+                      <p className="text-[10px] text-[#6B6B6B] mt-0.5">{resume?.fileName || "PM_Resume.pdf"}</p>
                     </div>
                   </div>
                   <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">1 week ago</span>
-                </div>
+                </button>
 
               </div>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Resume Preview Modal */}
+      {isPreviewOpen && (
+        <div
+          className="fixed inset-0 bg-[#111111]/30 backdrop-blur-[1px] z-50 flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setIsPreviewOpen(false)}
+        >
+          <div
+            className="bg-white border border-[#E8E8E6] rounded-2xl w-full max-w-2xl p-6 space-y-6 shadow-xl text-left flex flex-col h-[80vh] font-sans"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[#E8E8E6] pb-4 shrink-0">
+              <div>
+                <h3 className="font-display font-semibold text-lg text-[#111111]">
+                  Parsed Document Text
+                </h3>
+                <p className="text-xs text-[#6B6B6B] mt-0.5">
+                  Raw textual content extracted and vectorized in InterviewPilot.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsPreviewOpen(false)}
+                className="p-1 rounded hover:bg-[#E8E8E6] text-[#6B6B6B] hover:text-[#111111] cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto bg-[#F8F8F6] p-6 rounded-xl border border-[#E8E8E6] min-h-0 text-[#111111] select-text">
+              {loadingText ? (
+                <div className="flex flex-col items-center justify-center h-full space-y-3 text-xs text-[#6B6B6B]">
+                  <Loader2 className="w-6 h-6 text-[#111111] animate-spin" />
+                  <span>Retrieving extracted vectors...</span>
+                </div>
+              ) : extractedText ? (
+                <pre className="whitespace-pre-wrap text-sm leading-relaxed font-serif font-light">
+                  {extractedText}
+                </pre>
+              ) : (
+                <div className="text-center py-20 text-xs text-[#6B6B6B] italic">
+                  No text content extracted.
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

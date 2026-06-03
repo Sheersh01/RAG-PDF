@@ -58,6 +58,14 @@ export const documentApi = {
     const response = await API.get("/documents/resume");
     return response.data;
   },
+  getResumeText: async () => {
+    const response = await API.get("/documents/resume/text");
+    return response.data;
+  },
+  deleteResume: async () => {
+    const response = await API.delete("/documents/resume");
+    return response.data;
+  },
 };
 
 // Resume Analysis endpoints

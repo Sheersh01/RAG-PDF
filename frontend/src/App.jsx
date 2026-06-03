@@ -44,9 +44,7 @@ const App = () => {
             <Route path="/ats-matcher" element={<ErrorBoundary><AtsMatcher /></ErrorBoundary>} />
             <Route path="/mock-interview" element={<ErrorBoundary><MockInterview /></ErrorBoundary>} />
             <Route path="/ai-coach" element={<ErrorBoundary><AiCoach /></ErrorBoundary>} />
-            {import.meta.env.DEV && (
-              <Route path="/resume-search" element={<ErrorBoundary><ResumeSearch /></ErrorBoundary>} />
-            )}
+            <Route path="/resume-search" element={<ErrorBoundary><ResumeSearch /></ErrorBoundary>} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Route>
         </Route>
