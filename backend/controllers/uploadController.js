@@ -10,13 +10,13 @@ export const uploadDocument = async (req, res) => {
       });
     }
 
-    const extractedText = await extractTextFromPdf(req.file.path);
+    const extractedText = await extractTextFromPdf(req.file.buffer || req.file.path);
     const uploadType = req.path.replace("/", "") || "document";
 
     const document = await Document.create({
       userId: req.user.userId,
       type: uploadType,
-      fileName: req.file.filename,
+      fileName: req.file.filename || req.file.originalname,
       extractedText,
     });
 
@@ -25,10 +25,10 @@ export const uploadDocument = async (req, res) => {
       message: "File uploaded and text extracted successfully",
       file: {
         originalName: req.file.originalname,
-        fileName: req.file.filename,
+        fileName: req.file.filename || req.file.originalname,
         mimeType: req.file.mimetype,
         size: req.file.size,
-        path: req.file.path,
+        path: req.file.path || "in-memory",
       },
       document: {
         id: document._id,

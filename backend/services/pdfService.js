@@ -1,14 +1,22 @@
 import fs from "fs";
 import { PDFParse } from "pdf-parse";
 
-const readPdfText = async (filePath) => {
+const readPdfText = async (fileInput) => {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       reject(new Error("PDF text extraction timed out after 30 seconds."));
     }, 30000);
 
     try {
-      const dataBuffer = fs.readFileSync(filePath);
+      let dataBuffer;
+      if (Buffer.isBuffer(fileInput)) {
+        dataBuffer = fileInput;
+      } else if (typeof fileInput === "string") {
+        dataBuffer = fs.readFileSync(fileInput);
+      } else {
+        throw new Error("Invalid file input: must be path string or Buffer.");
+      }
+      
       const parser = new PDFParse({ data: dataBuffer });
 
       parser.getText()

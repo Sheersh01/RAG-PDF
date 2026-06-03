@@ -11,7 +11,7 @@ export const uploadResume = async (req, res) => {
       });
     }
 
-    const text = await extractPdfText(req.file.path);
+    const text = await extractPdfText(req.file.buffer || req.file.path);
 
     // Purge prior resume document and chunks for this user to avoid polluting vector searches
     const existingResumes = await Document.find({ userId: req.user.id, type: "resume" });
@@ -24,7 +24,7 @@ export const uploadResume = async (req, res) => {
     const document = new Document({
       userId: req.user.id,
       type: "resume",
-      fileName: req.file.filename,
+      fileName: req.file.filename || req.file.originalname,
       extractedText: text,
     });
 
