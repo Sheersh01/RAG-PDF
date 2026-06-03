@@ -57,15 +57,17 @@ const apiLimiter = rateLimit({
   message: { success: false, message: "Heavy operations limit exceeded. Please wait 15 minutes." },
 });
 
-app.use(generalLimiter);
+
+app.set("trust proxy", true);
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   })
 );
 
+app.use(generalLimiter);
 app.use(express.json());
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
