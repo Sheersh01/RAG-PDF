@@ -1,5 +1,5 @@
 import fs from "fs";
-import { PDFParse } from "pdf-parse";
+import pdf from "pdf-parse";
 
 const readPdfText = async (fileInput) => {
   return new Promise((resolve, reject) => {
@@ -17,9 +17,7 @@ const readPdfText = async (fileInput) => {
         throw new Error("Invalid file input: must be path string or Buffer.");
       }
       
-      const parser = new PDFParse({ data: dataBuffer });
-
-      parser.getText()
+      pdf(dataBuffer)
         .then((data) => {
           clearTimeout(timeout);
           resolve(data.text);
