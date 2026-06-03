@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
+import { Loader2 } from "lucide-react";
 
 // Route guards
 import PrivateRoute from "./components/PrivateRoute";
@@ -21,11 +22,20 @@ import AiCoach from "./pages/AiCoach";
 import ResumeSearch from "./pages/ResumeSearch";
 
 const App = () => {
-  const { initAuth } = useAuthStore();
+  const { initAuth, isCheckingAuth } = useAuthStore();
 
   useEffect(() => {
     initAuth();
   }, [initAuth]);
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-[#F8F8F6] flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="w-8 h-8 text-[#111111] animate-spin" />
+        <span className="text-xs text-[#6B6B6B] font-semibold tracking-wider uppercase select-none">Verifying session...</span>
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter>

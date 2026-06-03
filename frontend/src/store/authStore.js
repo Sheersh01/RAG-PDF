@@ -6,18 +6,19 @@ export const useAuthStore = create((set) => ({
   token: null,
   isAuthenticated: false,
   isLoading: false,
+  isCheckingAuth: true,
   error: null,
 
   initAuth: async () => {
     try {
       const data = await authApi.me();
       if (data.success && data.user) {
-        set({ user: data.user, isAuthenticated: true, isLoading: false });
+        set({ user: data.user, isAuthenticated: true, isCheckingAuth: false });
       } else {
-        set({ user: null, isAuthenticated: false, isLoading: false });
+        set({ user: null, isAuthenticated: false, isCheckingAuth: false });
       }
     } catch (err) {
-      set({ user: null, isAuthenticated: false, isLoading: false });
+      set({ user: null, isAuthenticated: false, isCheckingAuth: false });
     }
   },
 
