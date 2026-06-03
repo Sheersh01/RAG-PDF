@@ -26,6 +26,9 @@ export const useAuthStore = create((set) => ({
     try {
       const data = await authApi.login(email, password);
       if (data.success) {
+        if (data.token) {
+          localStorage.setItem("token", data.token);
+        }
         set({
           user: data.user,
           isAuthenticated: true,
@@ -48,6 +51,9 @@ export const useAuthStore = create((set) => ({
     try {
       const data = await authApi.register(name, email, password);
       if (data.success) {
+        if (data.token) {
+          localStorage.setItem("token", data.token);
+        }
         set({
           user: data.user,
           isAuthenticated: true,
@@ -71,6 +77,7 @@ export const useAuthStore = create((set) => ({
     } catch (err) {
       console.error("Logout request failed:", err);
     }
+    localStorage.removeItem("token");
     set({
       user: null,
       isAuthenticated: false,
