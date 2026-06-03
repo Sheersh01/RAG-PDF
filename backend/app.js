@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
+import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes.js";
 import documentRoutes from "./routes/documentRoutes.js";
 import { protect } from "./middleware/authMiddleware.js";
@@ -77,6 +78,15 @@ app.get("/", (req, res) => {
   res.json({
     success: true,
     message: "InterviewPilot API Running",
+  });
+});
+
+app.get("/api/health", (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+  res.status(200).json({
+    success: true,
+    status: "healthy",
+    database: dbStatus,
   });
 });
 

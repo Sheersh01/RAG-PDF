@@ -15,9 +15,9 @@ const documentChunkSchema = new mongoose.Schema(
       type: [Number],
       validate: {
         validator: function (arr) {
-          return Array.isArray(arr) && arr.length === 768;
+          return Array.isArray(arr) && arr.length === 3072;
         },
-        message: "Embedding array must have exactly 768 dimensions",
+        message: "Embedding array must have exactly 3072 dimensions",
       },
     },
   },

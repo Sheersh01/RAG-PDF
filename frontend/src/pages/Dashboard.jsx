@@ -19,6 +19,9 @@ const Dashboard = () => {
   const [resume, setResume] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [uploadStage, setUploadStage] = useState(""); // 'parsing' | 'splitting' | 'embedding' | 'indexing' | 'done' | ''
+  const [targetRole, setTargetRole] = useState("");
 
   const fetchResume = useCallback(async () => {
     try {
@@ -52,20 +55,44 @@ const Dashboard = () => {
     }
 
     setUploading(true);
-    const toastId = toast.loading("Uploading and vectorizing resume...");
+    setUploadStage("parsing");
+
+    const parseTimer = setTimeout(() => setUploadStage("splitting"), 1200);
+    const splitTimer = setTimeout(() => setUploadStage("embedding"), 2400);
+    const embedTimer = setTimeout(() => setUploadStage("indexing"), 4500);
+
+    const toastId = toast.loading("Processing resume ingestion...");
     try {
       const data = await documentApi.uploadResume(file);
       if (data && data._id) {
+        clearTimeout(parseTimer);
+        clearTimeout(splitTimer);
+        clearTimeout(embedTimer);
+        setUploadStage("done");
         toast.success("Resume processed and indexed successfully!", { id: toastId });
-        setResume(data);
+        
+        setTimeout(() => {
+          setResume(data);
+          setUploading(false);
+          setUploadStage("");
+          setCurrentStep(2); // Move to Choose Role step
+        }, 800);
       } else {
+        clearTimeout(parseTimer);
+        clearTimeout(splitTimer);
+        clearTimeout(embedTimer);
+        setUploadStage("");
+        setUploading(false);
         toast.error("Failed to process resume.", { id: toastId });
       }
     } catch (err) {
+      clearTimeout(parseTimer);
+      clearTimeout(splitTimer);
+      clearTimeout(embedTimer);
+      setUploadStage("");
+      setUploading(false);
       console.error(err);
       toast.error(err.response?.data?.message || "Error uploading resume.", { id: toastId });
-    } finally {
-      setUploading(false);
     }
   }, []);
 
@@ -209,27 +236,166 @@ const Dashboard = () => {
                   </div>
                 </div>
               ) : (
-                /* Empty Upload Zone */
-                <div
-                  {...getRootProps()}
-                  className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 ${
-                    isDragActive
-                      ? "border-indigo-500 bg-indigo-500/5"
-                      : "border-slate-800 hover:border-slate-700 hover:bg-slate-900/10"
-                  }`}
-                >
-                  <input {...getInputProps()} />
-                  <UploadCloud className="w-12 h-12 text-slate-400 mx-auto mb-4 animate-bounce" />
-                  <h3 className="text-sm font-semibold text-slate-200">
-                    Upload your resume to get started
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1.5 max-w-sm mx-auto">
-                    Drag and drop your PDF resume here, or click to browse files from your device.
-                  </p>
-                  <div className="mt-6 flex items-center justify-center gap-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider bg-slate-900/50 py-2 px-4 rounded-lg inline-flex border border-slate-850">
-                    <AlertCircle className="w-3.5 h-3.5 text-indigo-400" />
-                    PDF files are split & stored as vectors for LLM RAG context
+                /* Onboarding Wizard */
+                <div className="space-y-6">
+                  {/* Step Indicators */}
+                  <div className="flex items-center justify-between border-b border-slate-800/40 pb-4">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${currentStep >= 1 ? 'bg-indigo-650 text-white' : 'bg-slate-800 text-slate-400'}`}>1</div>
+                      <span className={`text-xs font-semibold ${currentStep === 1 ? 'text-white' : 'text-slate-500'}`}>Upload Resume</span>
+                    </div>
+                    <div className="h-px bg-slate-800 flex-1 mx-4"></div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${currentStep >= 2 ? 'bg-indigo-650 text-white' : 'bg-slate-800 text-slate-400'}`}>2</div>
+                      <span className={`text-xs font-semibold ${currentStep === 2 ? 'text-white' : 'text-slate-500'}`}>Define Focus</span>
+                    </div>
+                    <div className="h-px bg-slate-800 flex-1 mx-4"></div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${currentStep >= 3 ? 'bg-indigo-650 text-white' : 'bg-slate-800 text-slate-400'}`}>3</div>
+                      <span className={`text-xs font-semibold ${currentStep === 3 ? 'text-white' : 'text-slate-500'}`}>Ready</span>
+                    </div>
                   </div>
+
+                  {/* Step Content */}
+                  {currentStep === 1 && (
+                    <div className="space-y-4">
+                      {uploading ? (
+                        /* Progress Indicator during upload */
+                        <div className="p-10 border border-slate-800 rounded-2xl text-center space-y-4 bg-slate-900/10">
+                          <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mx-auto mb-2" />
+                          <div className="space-y-1.5">
+                            <h3 className="text-sm font-semibold text-slate-200">Processing Ingestion</h3>
+                            <p className="text-xs text-indigo-400 font-medium animate-pulse">
+                              {uploadStage === 'parsing' && "Parsing PDF text content..."}
+                              {uploadStage === 'splitting' && "Splitting text into chunks..."}
+                              {uploadStage === 'embedding' && "Generating vector embeddings..."}
+                              {uploadStage === 'indexing' && "Indexing vectors in Atlas..."}
+                              {uploadStage === 'done' && "Almost done! Wrapping up..."}
+                              {!uploadStage && "Initializing ingestion pipeline..."}
+                            </p>
+                          </div>
+                          {/* Simulated step checker UI */}
+                          <div className="flex justify-center items-center gap-6 text-[9px] text-slate-500 font-semibold uppercase tracking-wider pt-2 select-none">
+                            <span className={uploadStage === 'parsing' ? 'text-indigo-400' : ''}>1. Parse</span>
+                            <span>•</span>
+                            <span className={uploadStage === 'splitting' ? 'text-indigo-400' : ''}>2. Split</span>
+                            <span>•</span>
+                            <span className={uploadStage === 'embedding' ? 'text-indigo-400' : ''}>3. Embed</span>
+                            <span>•</span>
+                            <span className={uploadStage === 'indexing' ? 'text-indigo-400' : ''}>4. Index</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          {...getRootProps()}
+                          className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 ${
+                            isDragActive
+                              ? "border-indigo-500 bg-indigo-500/5"
+                              : "border-slate-800 hover:border-slate-700 hover:bg-slate-900/10"
+                          }`}
+                        >
+                          <input {...getInputProps()} />
+                          <UploadCloud className="w-12 h-12 text-slate-400 mx-auto mb-4 animate-bounce" />
+                          <h3 className="text-sm font-semibold text-slate-200">
+                            Upload your resume to get started
+                          </h3>
+                          <p className="text-xs text-slate-400 mt-1.5 max-w-sm mx-auto leading-relaxed">
+                            Drag and drop your PDF resume here, or click to browse files from your device.
+                          </p>
+                          <div className="mt-6 flex items-center justify-center gap-2 text-[10px] font-semibold text-slate-550 uppercase tracking-wider bg-slate-900/50 py-2.5 px-4 rounded-lg inline-flex border border-slate-850">
+                            <AlertCircle className="w-3.5 h-3.5 text-indigo-400" />
+                            PDF files are split & stored as vectors for LLM RAG context
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {currentStep === 2 && (
+                    <div className="space-y-6 p-4">
+                      <div className="space-y-1.5 text-center">
+                        <h3 className="text-base font-semibold text-white">Define Target Focus</h3>
+                        <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                          Select a role preset or type your target job role. This focus grounds your upcoming AI resume analysis and mock interviews.
+                        </p>
+                      </div>
+
+                      {/* Preset Pills */}
+                      <div className="space-y-2">
+                        <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Presets Quick-fill</span>
+                        <div className="flex flex-wrap gap-2">
+                          {['Software Engineer', 'Product Manager', 'Data Analyst', 'UI/UX Designer'].map((role) => (
+                            <button
+                              key={role}
+                              type="button"
+                              onClick={() => setTargetRole(role)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                                targetRole === role
+                                  ? 'bg-indigo-650/20 border-indigo-500 text-indigo-300'
+                                  : 'border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-slate-200'
+                              }`}
+                            >
+                              {role}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Custom Input */}
+                      <div className="space-y-2">
+                        <label className="block text-[10px] text-slate-500 uppercase tracking-wider font-semibold pl-0.5">Custom Focus Role</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Mobile Developer, Cloud Architect, QA Engineer..."
+                          value={targetRole}
+                          onChange={(e) => setTargetRole(e.target.value)}
+                          className="w-full py-3 px-4 rounded-xl text-sm glass-input text-slate-200 placeholder-slate-650"
+                        />
+                      </div>
+
+                      {/* Next button */}
+                      <div className="flex justify-end pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setCurrentStep(3)}
+                          disabled={!targetRole.trim()}
+                          className="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-40 disabled:pointer-events-none text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-lg shadow-indigo-600/20"
+                        >
+                          Next Step
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentStep === 3 && (
+                    <div className="space-y-6 p-4 text-center">
+                      <div className="w-14 h-14 rounded-full bg-emerald-500/10 text-emerald-450 border border-emerald-500/20 flex items-center justify-center mx-auto">
+                        <Sparkles className="w-6 h-6 animate-pulse" />
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-base font-semibold text-white">Setup Completed!</h3>
+                        <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+                          Your resume is fully indexed and your target role is set to <strong className="text-indigo-400">{targetRole}</strong>. Let's run your first full AI analysis!
+                        </p>
+                      </div>
+
+                      <div className="flex justify-center gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setCurrentStep(2)}
+                          className="px-5 py-2.5 border border-slate-800 hover:bg-slate-900/50 text-slate-400 hover:text-slate-200 rounded-xl text-xs font-semibold cursor-pointer transition-colors"
+                        >
+                          Change Role
+                        </button>
+                        <Link
+                          to="/resume-analyzer"
+                          className="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-650 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-lg shadow-indigo-650/20"
+                        >
+                          Run First Analysis
+                        </Link>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -200,7 +200,28 @@ Provide a concise, grounded critique (max 4-5 sentences) summarizing:
             </p>
           </div>
 
-          <form onSubmit={handleGenerateQuestions} className="space-y-4">
+          <form onSubmit={handleGenerateQuestions} className="space-y-5">
+            {/* Presets pills */}
+            <div className="space-y-2">
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold pl-1 block">Role Presets</span>
+              <div className="flex flex-wrap gap-2">
+                {['Software Engineer', 'Product Manager', 'Data Analyst', 'UI/UX Designer'].map((role) => (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => setTopic(role)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                      topic === role
+                        ? 'bg-indigo-650/20 border-indigo-500 text-indigo-300'
+                        : 'border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-slate-200'
+                    }`}
+                  >
+                    {role}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 pl-1">
                 Target Role / Focus Topic
@@ -210,7 +231,7 @@ Provide a concise, grounded critique (max 4-5 sentences) summarizing:
                 placeholder="e.g. Senior Frontend Engineer (React/TypeScript), Product Manager, Machine Learning Scientist..."
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                className="w-full py-3 px-4 rounded-xl text-sm glass-input text-slate-200 placeholder-slate-600"
+                className="w-full py-3 px-4 rounded-xl text-sm glass-input text-slate-200 placeholder-slate-650"
                 disabled={generating}
               />
             </div>

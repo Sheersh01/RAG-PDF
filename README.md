@@ -11,7 +11,7 @@ InterviewPilot is a production-grade Full-Stack RAG (Retrieval-Augmented Generat
     *   Uploads PDF resumes via `multer` capped at a strict 10MB size limit.
     *   Parses text from PDFs asynchronously using `pdf-parse` protected by a 30-second execution timeout.
     *   Splits text into chunks of `1000` characters with a `200` character overlap via LangChain's `RecursiveCharacterTextSplitter`.
-    *   Generates 768-dimensional embeddings using the Google Generative AI embeddings model (`gemini-embedding-2`).
+    *   Generates 3072-dimensional embeddings using the Google Generative AI embeddings model (`gemini-embedding-2`).
     *   Stores vectorized chunks in MongoDB Atlas using a `$vectorSearch` index.
 *   **Automatic Resume Replacement**: Automatically purges any previous resume documents and their corresponding vector index chunks upon new uploads to prevent context pollution.
 *   **AI Resume Analyzer**: Reviews parsed resume content and returns structured JSON outlining core strengths, critical gaps, and immediate action items.
@@ -139,7 +139,7 @@ frontend/
     *   `userId` (ObjectId -> User)
     *   `documentId` (ObjectId -> Document)
     *   `content` (String)
-    *   `embedding` (Array of Numbers, size 768, custom validator protected)
+    *   `embedding` (Array of Numbers, size 3072, custom validator protected)
     *   **Index**: Compound index on `{ userId: 1, documentId: 1 }` for faster lookups.
 
 ### MongoDB Atlas Vector Search Index Setup (Step-by-Step UI Guide)
@@ -156,7 +156,7 @@ To enable semantic vector search on your Atlas cluster:
        "dynamic": true,
        "fields": {
          "embedding": {
-           "dimensions": 768,
+           "dimensions": 3072,
            "similarity": "cosine",
            "type": "knnVector"
          },
