@@ -15,7 +15,7 @@ export const searchChunks = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      chunks: chunks.map((c) => c.content),
+      chunks,
     });
   } catch (error) {
     return res.status(500).json({

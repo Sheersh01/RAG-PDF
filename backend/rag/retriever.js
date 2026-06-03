@@ -9,7 +9,39 @@ const STOPWORDS = new Set([
   "your", "my", "our", "their", "his", "her", "its", "you", "me", "him", "them"
 ]);
 
+const escapeRegex = (string) => {
+  return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+};
+
 export const retrieveRelevantChunks = async (question, userId) => {
+  // Phase 1: Exact keyword check
+  const trimmedQuery = question.trim();
+  const escapedQuery = escapeRegex(trimmedQuery);
+  if (escapedQuery.length >= 3) {
+    const exactMatches = await DocumentChunk.find({
+      userId: new mongoose.Types.ObjectId(userId),
+      content: {
+        $regex: escapedQuery,
+        $options: "i"
+      }
+    }).limit(10);
+
+    if (exactMatches.length > 0) {
+      return exactMatches.map((m) => ({
+        _id: m._id,
+        content: m.content,
+        documentId: m.documentId,
+        section: m.section,
+        title: m.title,
+        documentName: m.documentName,
+        chunkType: m.chunkType,
+        score: 1.0,
+        boostedScore: 1.0,
+      }));
+    }
+  }
+
+  // Fallback to vector search if no exact matches found
   const queryVector = await embeddings.embedQuery(question);
 
   // Retrieve more candidates for reranking (e.g., 15)
@@ -30,6 +62,10 @@ export const retrieveRelevantChunks = async (question, userId) => {
       $project: {
         content: 1,
         documentId: 1,
+        section: 1,
+        title: 1,
+        documentName: 1,
+        chunkType: 1,
         score: { $meta: "vectorSearchScore" },
       },
     },

@@ -37,6 +37,10 @@ export const uploadResume = async (req, res) => {
           documentId: document._id,
           content: chunk.content,
           embedding: chunk.embedding,
+          section: chunk.section,
+          title: chunk.title,
+          documentName: document.fileName,
+          chunkType: "resume",
         }),
       ),
     );

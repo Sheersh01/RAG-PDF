@@ -11,6 +11,13 @@ const documentChunkSchema = new mongoose.Schema(
       ref: "Document",
     },
     content: String,
+    section: String,
+    title: String,
+    documentName: String,
+    chunkType: {
+      type: String,
+      default: "resume",
+    },
     embedding: {
       type: [Number],
       validate: {
@@ -28,5 +35,6 @@ const documentChunkSchema = new mongoose.Schema(
 
 // Index fields used for filtering in Atlas Vector Search & non-vector queries
 documentChunkSchema.index({ userId: 1, documentId: 1 });
+documentChunkSchema.index({ section: 1 });
 
 export default mongoose.model("DocumentChunk", documentChunkSchema);

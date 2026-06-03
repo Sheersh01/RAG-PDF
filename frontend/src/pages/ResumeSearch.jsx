@@ -148,18 +148,79 @@ const ResumeSearch = () => {
             <span className="text-[10px] font-bold text-[#111111] uppercase tracking-wider pl-1 flex items-center gap-1.5">
               Vector Matches Found ({chunks.length})
             </span>
-            <div className="space-y-3">
-              {chunks.map((content, index) => (
-                <div
-                  key={index}
-                  className="bg-white border border-[#E8E8E6] rounded-lg p-4 md:p-5 text-xs md:text-sm leading-relaxed text-[#111111] border-l-4 border-l-[#111111] shadow-sm relative overflow-hidden"
-                >
-                  <div className="absolute top-0 right-0 p-2 bg-[#F8F8F6] border-b border-l border-[#E8E8E6] rounded-bl-lg text-[9px] font-bold text-[#6B6B6B] uppercase">
-                    Rank #{index + 1}
+            <div className="space-y-4">
+              {chunks.map((chunk, index) => {
+                // Find matched keywords in the client-side for rendering
+                const queryTerms = query
+                  .toLowerCase()
+                  .replace(/[^a-z0-9\s]/g, "")
+                  .split(/\s+/)
+                  .filter(term => term.length >= 3);
+                
+                const matchedWords = queryTerms.filter(term => 
+                  chunk.content.toLowerCase().includes(term)
+                );
+
+                const relevanceScore = chunk.score 
+                  ? Math.min(100, Math.round(chunk.score * 100)) 
+                  : 100;
+
+                return (
+                  <div
+                    key={index}
+                    className="bg-white border border-[#E8E8E6] rounded-xl p-5 md:p-6 space-y-4 shadow-sm relative overflow-hidden hover:border-[#111111]/30 transition-all font-sans text-left"
+                  >
+                    {/* Rank & Relevance badge */}
+                    <div className="flex items-center justify-between border-b border-[#E8E8E6] pb-3">
+                      <div>
+                        <span className="text-[10px] font-bold text-[#6B6B6B] uppercase tracking-widest block">
+                          {chunk.section || "General"}
+                        </span>
+                        <h4 className="text-sm font-bold text-[#111111] mt-0.5">
+                          {chunk.title || chunk.documentName || "Resume Document"}
+                        </h4>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-[10.5px] font-semibold text-[#6B6B6B] bg-[#F8F8F6] px-2.5 py-1 rounded-md border border-[#E8E8E6]">
+                          Rank #{index + 1}
+                        </span>
+                        <span className="text-[10.5px] font-bold text-[#4E7C59] bg-[#4E7C59]/10 px-2.5 py-1 rounded-md border border-[#4E7C59]/15">
+                          Relevance: {relevanceScore}%
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Content text */}
+                    <p className="text-xs md:text-sm text-[#111111] leading-relaxed whitespace-pre-wrap font-serif font-light">
+                      {chunk.content}
+                    </p>
+
+                    {/* Footer metadata details */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 text-[10px] text-[#6B6B6B] border-t border-[#E8E8E6]/60">
+                      {/* Matched Keywords */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold uppercase tracking-wider">Matched Keywords:</span>
+                        {matchedWords.length > 0 ? (
+                          matchedWords.map((word, wIdx) => (
+                            <span key={wIdx} className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#4E7C59]/10 text-[#4E7C59] rounded font-medium border border-[#4E7C59]/15 lowercase">
+                              ✓ {word}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="italic text-[#6B6B6B]/60">semantic match</span>
+                        )}
+                      </div>
+                      
+                      {/* Document filename */}
+                      {chunk.documentName && (
+                        <span className="italic text-[10.5px]">
+                          Source: {chunk.documentName}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <p className="pr-12">{content}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ) : searched ? (
