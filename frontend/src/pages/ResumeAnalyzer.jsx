@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { analysisApi, documentApi } from "../services/api";
+import { useAuthStore } from "../store/authStore";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
@@ -14,10 +15,12 @@ import {
 } from "lucide-react";
 
 const ResumeAnalyzer = () => {
+  const { user } = useAuthStore();
   const [resumeExists, setResumeExists] = useState(false);
   const [checkingResume, setCheckingResume] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
+  const [resumeId, setResumeId] = useState(null);
 
   const checkResumeStatus = useCallback(async () => {
     try {
@@ -25,6 +28,7 @@ const ResumeAnalyzer = () => {
       const data = await documentApi.getResume();
       if (data.success && data.document) {
         setResumeExists(true);
+        setResumeId(data.document._id);
       }
     } catch (err) {
       setResumeExists(false);
@@ -37,7 +41,21 @@ const ResumeAnalyzer = () => {
     checkResumeStatus();
   }, [checkResumeStatus]);
 
-  const runAnalysis = async () => {
+  const runAnalysis = async (rId, force = false) => {
+    if (!rId) return;
+
+    const cacheKey = `analysis_${user?.id || "guest"}_${rId}`;
+    const cached = localStorage.getItem(cacheKey);
+
+    if (cached && !force) {
+      try {
+        setAnalysis(JSON.parse(cached));
+        return;
+      } catch (e) {
+        localStorage.removeItem(cacheKey);
+      }
+    }
+
     setAnalyzing(true);
     setAnalysis(null);
     const toastId = toast.loading("Analyzing resume structures and contents...");
@@ -46,6 +64,7 @@ const ResumeAnalyzer = () => {
       if (data.success) {
         toast.success("Resume analysis generated!", { id: toastId });
         setAnalysis(data);
+        localStorage.setItem(cacheKey, JSON.stringify(data));
       } else {
         toast.error("Failed to analyze resume.", { id: toastId });
       }
@@ -61,10 +80,10 @@ const ResumeAnalyzer = () => {
   };
 
   useEffect(() => {
-    if (resumeExists) {
-      runAnalysis();
+    if (resumeExists && resumeId) {
+      runAnalysis(resumeId);
     }
-  }, [resumeExists]);
+  }, [resumeExists, resumeId]);
 
   if (checkingResume) {
     return (
@@ -140,7 +159,7 @@ const ResumeAnalyzer = () => {
         </div>
         {!analyzing && analysis && (
           <button
-            onClick={runAnalysis}
+            onClick={() => runAnalysis(resumeId, true)}
             className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-[#E8E8E6] hover:bg-white text-[#111111] text-xs font-semibold transition-all cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />

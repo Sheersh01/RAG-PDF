@@ -57,7 +57,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (user) {
-      const savedRole = localStorage.getItem(`targetRole_${user._id}`);
+      const savedRole = localStorage.getItem(`targetRole_${user.id}`);
       if (savedRole) {
         setTargetRole(savedRole);
       }
@@ -68,7 +68,7 @@ const Dashboard = () => {
   useEffect(() => {
     const handleStorageChange = () => {
       if (user) {
-        const savedRole = localStorage.getItem(`targetRole_${user._id}`);
+        const savedRole = localStorage.getItem(`targetRole_${user.id}`);
         if (savedRole) {
           setTargetRole(savedRole);
         }

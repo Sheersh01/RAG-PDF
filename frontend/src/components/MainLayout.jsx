@@ -57,8 +57,8 @@ const MainLayout = () => {
 
   useEffect(() => {
     if (user) {
-      setIsPro(localStorage.getItem(`isPro_${user._id}`) === "true");
-      setTargetRoleInput(localStorage.getItem(`targetRole_${user._id}`) || "");
+      setIsPro(localStorage.getItem(`isPro_${user.id}`) === "true");
+      setTargetRoleInput(localStorage.getItem(`targetRole_${user.id}`) || "");
       setUpgradeCardholder(user.name || "");
     }
   }, [user]);
@@ -67,8 +67,8 @@ const MainLayout = () => {
   useEffect(() => {
     const handleStorageChange = () => {
       if (user) {
-        setIsPro(localStorage.getItem(`isPro_${user._id}`) === "true");
-        setTargetRoleInput(localStorage.getItem(`targetRole_${user._id}`) || "");
+        setIsPro(localStorage.getItem(`isPro_${user.id}`) === "true");
+        setTargetRoleInput(localStorage.getItem(`targetRole_${user.id}`) || "");
       }
     };
     window.addEventListener("storage", handleStorageChange);
@@ -372,7 +372,7 @@ const MainLayout = () => {
                   <button
                     onClick={() => {
                       if (user) {
-                        localStorage.setItem(`targetRole_${user._id}`, targetRoleInput);
+                        localStorage.setItem(`targetRole_${user.id}`, targetRoleInput);
                         window.dispatchEvent(new Event("storage"));
                         toast.success("Target role focus updated!");
                       }
@@ -582,7 +582,7 @@ const MainLayout = () => {
                   await new Promise(resolve => setTimeout(resolve, 2000));
                   
                   if (user) {
-                    localStorage.setItem(`isPro_${user._id}`, "true");
+                    localStorage.setItem(`isPro_${user.id}`, "true");
                     localStorage.setItem("isPro", "true");
                   }
                   setIsPro(true);
