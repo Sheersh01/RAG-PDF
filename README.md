@@ -10,15 +10,23 @@ InterviewPilot is a production-grade Full-Stack RAG (Retrieval-Augmented Generat
 *   **Resume Ingestion & Vector Indexing**: 
     *   Uploads PDF resumes via `multer` capped at a strict 10MB size limit.
     *   Parses text from PDFs asynchronously using `pdf-parse` protected by a 30-second execution timeout.
-    *   Splits text into chunks of `1000` characters with a `200` character overlap via LangChain's `RecursiveCharacterTextSplitter`.
+    *   Splits text into chunks of `400` characters with an `80` character overlap via LangChain's `RecursiveCharacterTextSplitter`.
     *   Generates 3072-dimensional embeddings using the Google Generative AI embeddings model (`gemini-embedding-2`).
     *   Stores vectorized chunks in MongoDB Atlas using a `$vectorSearch` index.
 *   **Automatic Resume Replacement**: Automatically purges any previous resume documents and their corresponding vector index chunks upon new uploads to prevent context pollution.
+*   **Advanced RAG Search Pipeline**:
+    *   **Hybrid Exact Keyword Pre-search**: Queries Mongoose for exact case-insensitive matches (`$regex` matching) of search queries before running vector searches, returning immediate 100% relevance results for rare entities (e.g. `"TantraFiesta"`, `"Razorpay"`, `"GSAP"`).
+    *   **Resume-Aware Section Chunking**: Parses resumes into structured logical sections (`Experience`, `Projects`, `Skills`, `Education`, `Achievements`, `Certifications`) and extracts sub-titles (e.g. company names, project names) to maintain document hierarchy.
+    *   **Parent-Child Context Embedding**: Generates vectors on contextually enriched chunk strings (prepended with `Section: <name>\nTitle: <title>\n\n`) so dense queries successfully capture structural metadata.
+*   **Aesthetic Search Card UI**: A gorgeous, search results grid showcasing matched keywords (e.g. `✓ tantrafiesta` highlighted in green), relevance percentage labels, section types, and source files.
+*   **Interactive Workspace & Utilities**:
+    *   **Settings Panel**: Allows users to inspect profiles, update target role preferences, and perform a complete workspace index reset (purging all db documents and returning to the onboarding wizard).
+    *   **Help Desk**: Includes accordion-style FAQs and an interactive support ticket generator form.
+    *   **Pro Upgrade Simulation**: A simulated payment form that elevates accounts to "Pro Member" status, replacing upgrade CTAs with premium member badges.
 *   **AI Resume Analyzer**: Reviews parsed resume content and returns structured JSON outlining core strengths, critical gaps, and immediate action items.
 *   **ATS Optimizer / Score Matcher**: Evaluates resume vectors against job descriptions to calculate compatibility scores (0–100%) and pinpoint missing keyword gaps.
 *   **Mock Interview Simulator**: Conducts tailored QA sessions based on resume qualifications and roles, grading submissions with constructive qualitative reviews.
 *   **Interactive AI Coach**: Real-time chat dialogue featuring starter prompts and source citation lookups.
-*   **Diagnostic Search**: Gates a direct vector lookup interface behind a local Vite development flag (`import.meta.env.DEV`).
 
 ---
 
@@ -57,23 +65,23 @@ backend/
 │   ├── atsController.js      # Processes ATS matching & parses Gemini JSON responses
 │   ├── authController.js     # User registration, login, logout, and me context
 │   ├── chatController.js     # Manages standard QA prompt generation and model responses
-│   ├── documentController.js  # Uploads resumes and handles vector index cleanups
+│   ├── documentController.js  # Uploads, previews, and purges workspace resumes
 │   ├── interviewController.js # Prepares mock QA sessions and responses
 │   ├── ragController.js      # Unused: Retrieves top document chunks and queries Gemini
 │   ├── resumeAnalysisController.js # Compiles strengths, gaps, and improvements
-│   └── searchController.js   # Similarity searches raw database document chunks
+│   └── searchController.js   # Searches and returns raw metadata-rich document chunks
 ├── middleware/
 │   ├── authMiddleware.js     # Verifies cookie JWTs and attaches user payload
 │   └── uploadMiddleware.js   # Multer file configurations (10MB size limit)
 ├── models/
 │   ├── Document.js           # Holds parsed text metadata (type, fileName, rawText)
-│   ├── DocumentChunk.js      # Stores 768-dim vector arrays, compound indexes, & snippets
+│   ├── DocumentChunk.js      # Stores 3072-dim vectors, metadata (section, title, etc) & snippets
 │   └── User.js               # Holds user authentication credentials
 ├── rag/
-│   ├── chunker.js            # Standard Recursive Text Splitter setups
+│   ├── chunker.js            # Section-aware resume text parser and chunker
 │   ├── promptBuilder.js      # Builds system prompts for LLM outputs (JSON/text)
 │   ├── prompts.js            # Prepares general QA prompt templates
-│   └── retriever.js          # Invokes MongoDB Atlas vectorSearch pipelines
+│   └── retriever.js          # Exact pre-search checks & vector similarity search pipelines
 ├── routes/
 │   ├── atsRoutes.js
 │   ├── authRoutes.js
@@ -98,18 +106,18 @@ frontend/
 │   ├── components/
 │   │   ├── CircularProgress.jsx # Renders ATS score visual percentages
 │   │   ├── ErrorBoundary.jsx    # React error boundaries catching rendering crashes
-│   │   ├── MainLayout.jsx       # Layout containing sidebar (gates Search in prod)
+│   │   ├── MainLayout.jsx       # Layout containing sidebar, Settings, Help, & Pro modals
 │   │   ├── PrivateRoute.jsx     # Protects sensitive paths requiring login
 │   │   └── PublicRoute.jsx      # Prevents authenticated users from viewing login/signup
 │   ├── pages/
 │   │   ├── AiCoach.jsx          # Live grounded chat with sources citations
 │   │   ├── AtsMatcher.jsx       # Pastes JDs to calculate compatibility percentages
-│   │   ├── Dashboard.jsx        # Skeleton loaders UI, resume dropzone, & prep tools
+│   │   ├── Dashboard.jsx        # Skeleton loaders UI, resume text previewer, & prep tools
 │   │   ├── Login.jsx            # Sign-in portal
 │   │   ├── MockInterview.jsx    # Tailored QA simulation with answer rating
 │   │   ├── Register.jsx         # Sign-up portal
 │   │   ├── ResumeAnalyzer.jsx   # Strengths, weaknesses, and optimization reviews
-│   │   └── ResumeSearch.jsx     # Diagnostic raw chunk similarity lookup (dev-only)
+│   │   └── ResumeSearch.jsx     # Modern metadata-rich result cards search UI
 │   ├── services/
 │   │   └── api.js               # Intercepted Axios connection maps (withCredentials)
 │   ├── store/
@@ -118,7 +126,7 @@ frontend/
 │   ├── index.css                # Base stylesheet and custom Tailwind utilities
 │   └── main.jsx                 # Mounts the React virtual DOM tree
 ├── vite.config.js
-└── package.json
+│   └── package.json
 ```
 
 ---
@@ -139,35 +147,42 @@ frontend/
     *   `userId` (ObjectId -> User)
     *   `documentId` (ObjectId -> Document)
     *   `content` (String)
+    *   `section` (String)
+    *   `title` (String)
+    *   `documentName` (String)
+    *   `chunkType` (String)
     *   `embedding` (Array of Numbers, size 3072, custom validator protected)
-    *   **Index**: Compound index on `{ userId: 1, documentId: 1 }` for faster lookups.
+    *   **Indexes**: Compound index on `{ userId: 1, documentId: 1 }` and a single index on `{ section: 1 }`.
 
 ### MongoDB Atlas Vector Search Index Setup (Step-by-Step UI Guide)
-To enable semantic vector search on your Atlas cluster:
+To enable semantic vector search with filtering on your Atlas cluster:
 1. Log in to your MongoDB Atlas dashboard.
-2. Select your Database Deployment and click on **Search** tab.
+2. Select your Database Deployment and click on the **Search** tab.
 3. Click **Create Search Index** and select **JSON Editor** under **Atlas Vector Search**.
 4. Select your database name and choose the `documentchunks` collection.
 5. Enter **`vector_index`** as the Index Name.
-6. Paste the configuration from [search_index.json](file:///c:/Users/HP/Desktop/Programming/Projects/Full-Stack/RAG/docs/search_index.json):
+6. Paste the following configuration supporting filters:
    ```json
    {
-     "mappings": {
-       "dynamic": true,
-       "fields": {
-         "embedding": {
-           "dimensions": 3072,
-           "similarity": "cosine",
-           "type": "knnVector"
-         },
-         "userId": {
-           "type": "objectId"
-         }
+     "fields": [
+       {
+         "type": "vector",
+         "path": "embedding",
+         "numDimensions": 3072,
+         "similarity": "cosine"
+       },
+       {
+         "type": "filter",
+         "path": "userId"
+       },
+       {
+         "type": "filter",
+         "path": "section"
        }
-     }
+     ]
    }
    ```
-7. Click **Next**, review the setup, and hit **Create Search Index**. Atlas will begin building the index on your collection chunks.
+7. Click **Next**, review the setup, and hit **Create Search Index**. Atlas will begin building the index.
 
 ---
 
@@ -203,7 +218,9 @@ The backend explicitly enables credential-based CORS. When connecting, the incom
 | Method | Endpoint | Description | Request Headers & Body |
 | :--- | :--- | :--- | :--- |
 | **POST** | `/api/documents/resume` | Upload PDF and build vector chunks (Capped at 10MB) | `Bearer Cookie` + Multipart File Form |
-| **GET** | `/api/documents/resume` | Fetch active user's resume details | `Bearer Cookie` |
+| **GET** | `/api/documents/resume` | Fetch active user's resume metadata | `Bearer Cookie` |
+| **GET** | `/api/documents/resume/text` | Fetch active user's full parsed resume text | `Bearer Cookie` |
+| **DELETE** | `/api/documents/resume` | Delete active resume and purge vectorized index | `Bearer Cookie` |
 
 ### AI Prep Tools & RAG Pipeline (Protected by Rate Limiting: 15 req/15 min)
 | Method | Endpoint | Description | Request Body |
@@ -212,7 +229,7 @@ The backend explicitly enables credential-based CORS. When connecting, the incom
 | **POST** | `/api/ats-score` | Compute JD match score & gaps | `{ jobDescription }` |
 | **POST** | `/api/interview/questions` | Generate 3 customized mock questions | `{ topic }` |
 | **POST** | `/api/chat` | Chat with AI Coach (grounded context) | `{ question }` |
-| **POST** | `/api/search` | Search raw vector database matches (dev-only) | `{ question }` |
+| **POST** | `/api/search` | Search metadata-rich document chunks (pre-search + vector) | `{ question }` |
 
 ---
 
