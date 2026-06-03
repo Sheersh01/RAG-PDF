@@ -1,11 +1,24 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import dotenv from "dotenv";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+dotenv.config();
+
+const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+
+export const chatModel = new ChatGoogleGenerativeAI({
+  apiKey: process.env.GEMINI_API_KEY,
+  model: modelName,
+});
 
 export const generateGeminiResponse = async (prompt) => {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-
-  return response.text();
+  const response = await chatModel.invoke(prompt);
+  return typeof response?.content === "string"
+    ? response.content
+    : Array.isArray(response?.content)
+      ? response.content
+          .map((part) => (typeof part === "string" ? part : part?.text || ""))
+          .join("")
+      : String(response ?? "");
 };
+
+export default chatModel;

@@ -13,7 +13,13 @@ export const uploadResume = async (req, res) => {
 
     const text = await extractPdfText(req.file.path);
 
-    console.log(text);
+    // Purge prior resume document and chunks for this user to avoid polluting vector searches
+    const existingResumes = await Document.find({ userId: req.user.id, type: "resume" });
+    if (existingResumes.length > 0) {
+      const docIds = existingResumes.map(doc => doc._id);
+      await DocumentChunk.deleteMany({ documentId: { $in: docIds } });
+      await Document.deleteMany({ _id: { $in: docIds } });
+    }
 
     const document = new Document({
       userId: req.user.id,

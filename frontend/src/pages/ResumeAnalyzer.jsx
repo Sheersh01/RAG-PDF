@@ -68,9 +68,39 @@ const ResumeAnalyzer = () => {
 
   if (checkingResume) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
-        <p className="text-sm text-slate-405">Verifying resume index status...</p>
+      <div className="space-y-6 animate-pulse font-sans">
+        <div className="flex items-center justify-between border-b border-slate-800/40 pb-6">
+          <div className="space-y-2 w-full">
+            <div className="h-8 bg-slate-800 rounded w-1/3"></div>
+            <div className="h-4 bg-slate-800 rounded w-1/2"></div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="glass-card rounded-2xl border border-slate-800/40 p-6 h-80 bg-slate-900/20">
+            <div className="h-6 bg-slate-800 rounded w-1/2 mb-4"></div>
+            <div className="space-y-3">
+              <div className="h-3 bg-slate-800 rounded w-full"></div>
+              <div className="h-3 bg-slate-800 rounded w-5/6"></div>
+              <div className="h-3 bg-slate-800 rounded w-4/5"></div>
+            </div>
+          </div>
+          <div className="glass-card rounded-2xl border border-slate-800/40 p-6 h-80 bg-slate-900/20">
+            <div className="h-6 bg-slate-800 rounded w-1/2 mb-4"></div>
+            <div className="space-y-3">
+              <div className="h-3 bg-slate-800 rounded w-full"></div>
+              <div className="h-3 bg-slate-800 rounded w-5/6"></div>
+              <div className="h-3 bg-slate-800 rounded w-4/5"></div>
+            </div>
+          </div>
+          <div className="glass-card rounded-2xl border border-slate-800/40 p-6 h-80 bg-slate-900/20">
+            <div className="h-6 bg-slate-800 rounded w-1/2 mb-4"></div>
+            <div className="space-y-3">
+              <div className="h-3 bg-slate-800 rounded w-full"></div>
+              <div className="h-3 bg-slate-800 rounded w-5/6"></div>
+              <div className="h-3 bg-slate-800 rounded w-4/5"></div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

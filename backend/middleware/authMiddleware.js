@@ -1,9 +1,23 @@
 import jwt from "jsonwebtoken";
 
 export const protect = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  let token = null;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  // 1. Try to read from cookie header
+  const cookies = req.headers.cookie;
+  if (cookies) {
+    const tokenCookie = cookies.split(";").find((c) => c.trim().startsWith("token="));
+    if (tokenCookie) {
+      token = tokenCookie.split("=")[1];
+    }
+  }
+
+  // 2. Fallback to authorization header if cookie is missing
+  if (!token && req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+
+  if (!token) {
     return res.status(401).json({
       success: false,
       message: "Not authorized, token missing",
@@ -11,7 +25,6 @@ export const protect = (req, res, next) => {
   }
 
   try {
-    const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = {

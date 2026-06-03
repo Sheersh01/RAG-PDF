@@ -102,9 +102,22 @@ const AiCoach = () => {
 
   if (checkingResume) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 font-sans">
-        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
-        <p className="text-sm text-slate-400">Verifying resume index status...</p>
+      <div className="space-y-6 animate-pulse font-sans max-w-4xl mx-auto h-[calc(100vh-140px)] md:h-[calc(100vh-80px)] flex flex-col">
+        <div className="border-b border-slate-800/40 pb-4 shrink-0">
+          <div className="h-8 bg-slate-800 rounded w-1/4 mb-2"></div>
+          <div className="h-4 bg-slate-800 rounded w-1/2"></div>
+        </div>
+        <div className="flex-1 glass-card rounded-2xl border border-slate-800/40 p-6 bg-slate-900/20 space-y-4">
+          <div className="flex gap-3 max-w-[70%] mr-auto">
+            <div className="w-9 h-9 rounded-xl bg-slate-800 shrink-0"></div>
+            <div className="h-16 bg-slate-800 rounded-2xl w-full"></div>
+          </div>
+          <div className="flex gap-3 max-w-[50%] ml-auto flex-row-reverse">
+            <div className="w-9 h-9 rounded-xl bg-slate-800 shrink-0"></div>
+            <div className="h-12 bg-slate-800 rounded-2xl w-full"></div>
+          </div>
+        </div>
+        <div className="h-14 bg-slate-800 rounded-xl shrink-0 mt-4"></div>
       </div>
     );
   }

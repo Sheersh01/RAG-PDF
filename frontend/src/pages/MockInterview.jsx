@@ -143,9 +143,16 @@ Provide a concise, grounded critique (max 4-5 sentences) summarizing:
 
   if (checkingResume) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 font-sans">
-        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
-        <p className="text-sm text-slate-400">Verifying resume index status...</p>
+      <div className="space-y-6 animate-pulse font-sans max-w-4xl mx-auto">
+        <div className="border-b border-slate-800/40 pb-6">
+          <div className="h-8 bg-slate-800 rounded w-1/3 mb-2"></div>
+          <div className="h-4 bg-slate-800 rounded w-1/2"></div>
+        </div>
+        <div className="glass-card rounded-2xl border border-slate-800/40 p-6 md:p-8 h-72 bg-slate-900/20">
+          <div className="h-6 bg-slate-800 rounded w-1/4 mb-4"></div>
+          <div className="h-12 bg-slate-800 rounded-xl mb-6"></div>
+          <div className="h-12 bg-slate-800 rounded-xl"></div>
+        </div>
       </div>
     );
   }

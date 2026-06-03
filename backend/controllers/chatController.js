@@ -1,4 +1,4 @@
-import chatModel from "../services/chatService.js";
+import chatModel from "../services/geminiService.js";
 import { retrieveRelevantChunks } from "../rag/retriever.js";
 import { buildPrompt } from "../rag/promptBuilder.js";
 

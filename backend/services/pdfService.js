@@ -2,13 +2,29 @@ import fs from "fs";
 import { PDFParse } from "pdf-parse";
 
 const readPdfText = async (filePath) => {
-  const dataBuffer = fs.readFileSync(filePath);
-  const parser = new PDFParse({ data: dataBuffer });
-  const data = await parser.getText();
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error("PDF text extraction timed out after 30 seconds."));
+    }, 30000);
 
-  console.log(data.text);
+    try {
+      const dataBuffer = fs.readFileSync(filePath);
+      const parser = new PDFParse({ data: dataBuffer });
 
-  return data.text;
+      parser.getText()
+        .then((data) => {
+          clearTimeout(timeout);
+          resolve(data.text);
+        })
+        .catch((err) => {
+          clearTimeout(timeout);
+          reject(err);
+        });
+    } catch (error) {
+      clearTimeout(timeout);
+      reject(error);
+    }
+  });
 };
 
 export const extractPdfText = readPdfText;

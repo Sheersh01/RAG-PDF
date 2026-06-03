@@ -19,7 +19,7 @@ const MainLayout = () => {
   const { user, logout } = useAuthStore();
   const location = useLocation();
 
-  const navItems = [
+  const baseNavItems = [
     {
       label: "Dashboard",
       path: "/dashboard",
@@ -57,6 +57,10 @@ const MainLayout = () => {
       description: "Direct vector chunk query",
     },
   ];
+
+  const navItems = import.meta.env.DEV
+    ? baseNavItems
+    : baseNavItems.filter((item) => item.path !== "/resume-search");
 
   const handleLogout = () => {
     logout();

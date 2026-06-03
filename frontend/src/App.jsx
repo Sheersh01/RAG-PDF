@@ -5,6 +5,7 @@ import { useAuthStore } from "./store/authStore";
 // Route guards
 import PrivateRoute from "./components/PrivateRoute";
 import PublicRoute from "./components/PublicRoute";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 // Layout
 import MainLayout from "./components/MainLayout";
@@ -38,12 +39,14 @@ const App = () => {
         {/* Private Routes (only accessible if logged in) */}
         <Route element={<PrivateRoute />}>
           <Route element={<MainLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/resume-analyzer" element={<ResumeAnalyzer />} />
-            <Route path="/ats-matcher" element={<AtsMatcher />} />
-            <Route path="/mock-interview" element={<MockInterview />} />
-            <Route path="/ai-coach" element={<AiCoach />} />
-            <Route path="/resume-search" element={<ResumeSearch />} />
+            <Route path="/dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+            <Route path="/resume-analyzer" element={<ErrorBoundary><ResumeAnalyzer /></ErrorBoundary>} />
+            <Route path="/ats-matcher" element={<ErrorBoundary><AtsMatcher /></ErrorBoundary>} />
+            <Route path="/mock-interview" element={<ErrorBoundary><MockInterview /></ErrorBoundary>} />
+            <Route path="/ai-coach" element={<ErrorBoundary><AiCoach /></ErrorBoundary>} />
+            {import.meta.env.DEV && (
+              <Route path="/resume-search" element={<ErrorBoundary><ResumeSearch /></ErrorBoundary>} />
+            )}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Route>
         </Route>

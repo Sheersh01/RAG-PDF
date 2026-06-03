@@ -14,12 +14,63 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+// Console log sanitizer to prevent accidental logging of API keys
+const originalLog = console.log;
+console.log = (...args) => {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) {
+    originalLog.apply(console, args);
+    return;
+  }
+  const sanitizedArgs = args.map((arg) => {
+    if (typeof arg === "string") {
+      return arg.replaceAll(key, "[REDACTED_GEMINI_KEY]");
+    }
+    if (arg && typeof arg === "object") {
+      try {
+        const str = JSON.stringify(arg);
+        if (str.includes(key)) {
+          return JSON.parse(str.replaceAll(key, "[REDACTED_GEMINI_KEY]"));
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    return arg;
+  });
+  originalLog.apply(console, sanitizedArgs);
+};
+
+import rateLimit from "express-rate-limit";
+
+// Rate limit rules: global (100 reqs/15m) and strict (15 reqs/15m)
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { success: false, message: "Too many requests. Please try again after 15 minutes." },
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  message: { success: false, message: "Heavy operations limit exceeded. Please wait 15 minutes." },
+});
+
+app.use(generalLimiter);
+
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
 });
+
 connectDB();
 
 app.get("/", (req, res) => {
@@ -30,12 +81,12 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
-app.use("/api/documents", documentRoutes);
-app.post("/api/chat", protect, chat);
-app.use("/api/analyze-resume", resumeRoutes);
-app.use("/api/interview", interviewRoutes);
-app.use("/api/ats-score", atsRoutes);
-app.use("/api/search", searchRoutes);
+app.use("/api/documents", apiLimiter, documentRoutes);
+app.post("/api/chat", apiLimiter, protect, chat);
+app.use("/api/analyze-resume", apiLimiter, resumeRoutes);
+app.use("/api/interview", apiLimiter, interviewRoutes);
+app.use("/api/ats-score", apiLimiter, atsRoutes);
+app.use("/api/search", apiLimiter, searchRoutes);
 
 const PORT = process.env.PORT || 5000;
 

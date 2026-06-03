@@ -104,9 +104,43 @@ const Dashboard = () => {
       </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
-          <p className="text-sm text-slate-400">Loading your workspace...</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-pulse">
+          {/* Main workspace section skeleton */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="glass-card rounded-2xl border border-slate-800/40 p-6 h-72 bg-slate-900/20">
+              <div className="h-6 bg-slate-800 rounded w-1/4 mb-6"></div>
+              <div className="h-24 bg-slate-800 rounded-xl mb-4"></div>
+              <div className="h-16 bg-slate-800 rounded-xl"></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="glass-card rounded-xl p-5 border border-slate-850 h-32 bg-slate-900/20">
+                <div className="w-8 h-8 rounded bg-slate-800 mb-3"></div>
+                <div className="h-4 bg-slate-800 rounded w-1/2 mb-2"></div>
+                <div className="h-3 bg-slate-800 rounded w-3/4"></div>
+              </div>
+              <div className="glass-card rounded-xl p-5 border border-slate-850 h-32 bg-slate-900/20">
+                <div className="w-8 h-8 rounded bg-slate-800 mb-3"></div>
+                <div className="h-4 bg-slate-800 rounded w-1/2 mb-2"></div>
+                <div className="h-3 bg-slate-800 rounded w-3/4"></div>
+              </div>
+            </div>
+          </div>
+          {/* Sidebar sections skeleton */}
+          <div className="space-y-6">
+            <div className="glass-card rounded-2xl border border-slate-800/40 p-6 h-[260px] bg-slate-900/20">
+              <div className="h-4 bg-slate-800 rounded w-1/3 mb-4"></div>
+              <div className="space-y-3">
+                <div className="h-12 bg-slate-800 rounded-xl"></div>
+                <div className="h-12 bg-slate-800 rounded-xl"></div>
+                <div className="h-12 bg-slate-800 rounded-xl"></div>
+              </div>
+            </div>
+            <div className="glass-card rounded-2xl border border-slate-800/40 p-6 h-36 bg-slate-900/20">
+              <div className="h-3 bg-slate-800 rounded w-1/4 mb-3"></div>
+              <div className="h-3 bg-slate-800 rounded w-full mb-2"></div>
+              <div className="h-3 bg-slate-800 rounded w-5/6"></div>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -5,9 +5,10 @@ const API = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
-// Interceptor to inject authentication token
+// Interceptor to inject authentication token (kept for backward compatibility)
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -29,6 +30,14 @@ export const authApi = {
   },
   register: async (name, email, password) => {
     const response = await API.post("/auth/register", { name, email, password });
+    return response.data;
+  },
+  logout: async () => {
+    const response = await API.post("/auth/logout");
+    return response.data;
+  },
+  me: async () => {
+    const response = await API.get("/auth/me");
     return response.data;
   },
 };

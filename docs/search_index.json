@@ -1,0 +1,15 @@
+{
+  "mappings": {
+    "dynamic": true,
+    "fields": {
+      "embedding": {
+        "dimensions": 768,
+        "similarity": "cosine",
+        "type": "knnVector"
+      },
+      "userId": {
+        "type": "objectId"
+      }
+    }
+  }
+}

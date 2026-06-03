@@ -87,9 +87,23 @@ const AtsMatcher = () => {
 
   if (checkingResume) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
-        <p className="text-sm text-slate-400">Verifying resume index status...</p>
+      <div className="space-y-6 animate-pulse font-sans">
+        <div className="flex items-center justify-between border-b border-slate-800/40 pb-6">
+          <div className="space-y-2 w-full">
+            <div className="h-8 bg-slate-800 rounded w-1/3"></div>
+            <div className="h-4 bg-slate-800 rounded w-1/2"></div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          <div className="lg:col-span-3 glass-card rounded-2xl border border-slate-800/40 p-6 h-96 bg-slate-900/20">
+            <div className="h-6 bg-slate-800 rounded w-1/4 mb-4"></div>
+            <div className="h-64 bg-slate-800 rounded-xl"></div>
+          </div>
+          <div className="lg:col-span-2 glass-card rounded-2xl border border-slate-800/40 p-6 h-96 bg-slate-900/20">
+            <div className="h-48 w-48 rounded-full bg-slate-800 mx-auto mb-6"></div>
+            <div className="h-16 bg-slate-800 rounded-xl"></div>
+          </div>
+        </div>
       </div>
     );
   }

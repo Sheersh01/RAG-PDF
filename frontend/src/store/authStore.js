@@ -8,18 +8,16 @@ export const useAuthStore = create((set) => ({
   isLoading: false,
   error: null,
 
-  initAuth: () => {
+  initAuth: async () => {
     try {
-      const token = localStorage.getItem("token");
-      const userStr = localStorage.getItem("user");
-      if (token && userStr) {
-        const user = JSON.parse(userStr);
-        set({ token, user, isAuthenticated: true });
+      const data = await authApi.me();
+      if (data.success && data.user) {
+        set({ user: data.user, isAuthenticated: true, isLoading: false });
+      } else {
+        set({ user: null, isAuthenticated: false, isLoading: false });
       }
     } catch (err) {
-      console.error("Failed to parse user from localStorage:", err);
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
 
@@ -28,11 +26,8 @@ export const useAuthStore = create((set) => ({
     try {
       const data = await authApi.login(email, password);
       if (data.success) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
         set({
           user: data.user,
-          token: data.token,
           isAuthenticated: true,
           isLoading: false,
         });
@@ -53,11 +48,8 @@ export const useAuthStore = create((set) => ({
     try {
       const data = await authApi.register(name, email, password);
       if (data.success) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
         set({
           user: data.user,
-          token: data.token,
           isAuthenticated: true,
           isLoading: false,
         });
@@ -73,12 +65,14 @@ export const useAuthStore = create((set) => ({
     }
   },
 
-  logout: () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  logout: async () => {
+    try {
+      await authApi.logout();
+    } catch (err) {
+      console.error("Logout request failed:", err);
+    }
     set({
       user: null,
-      token: null,
       isAuthenticated: false,
       error: null,
     });
