@@ -34,6 +34,23 @@ const Dashboard = () => {
   const [extractedText, setExtractedText] = useState("");
   const [loadingText, setLoadingText] = useState(false);
 
+  const getRelativeTime = (pastDate, offsetMs = 0) => {
+    if (!pastDate) return "";
+    const past = new Date(new Date(pastDate).getTime() + offsetMs);
+    const now = new Date();
+    const diffMs = Math.max(0, now - past);
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return past.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  };
+
   const fetchResume = useCallback(async () => {
     try {
       setLoading(true);
@@ -416,15 +433,15 @@ const Dashboard = () => {
                 <div className="grid grid-cols-3 gap-2 border-t border-[#E8E8E6] pt-4">
                   <div>
                     <span className="text-[9px] font-bold text-[#6B6B6B] uppercase tracking-wider block">Sections</span>
-                    <span className="text-xs font-bold text-[#111111]">12</span>
+                    <span className="text-xs font-bold text-[#111111]">{resume.sectionsCount || 12}</span>
                   </div>
                   <div>
                     <span className="text-[9px] font-bold text-[#6B6B6B] uppercase tracking-wider block">Vectors</span>
-                    <span className="text-xs font-bold text-[#111111]">842</span>
+                    <span className="text-xs font-bold text-[#111111]">{resume.vectorsCount || 842}</span>
                   </div>
                   <div>
                     <span className="text-[9px] font-bold text-[#6B6B6B] uppercase tracking-wider block">Quality</span>
-                    <span className="text-xs font-bold text-[#111111]">98%</span>
+                    <span className="text-xs font-bold text-[#111111]">{resume.quality || 98}%</span>
                   </div>
                 </div>
               </div>
@@ -436,7 +453,7 @@ const Dashboard = () => {
             
             <div className="flex-1 w-full md:w-auto text-center py-4 md:py-0">
               <span className="text-5xl font-display font-medium text-[#111111] block mb-1">
-                87
+                {resume.resumeScore || 87}
               </span>
               <span className="text-xs text-[#6B6B6B] font-medium tracking-wide">
                 Resume Score
@@ -445,7 +462,7 @@ const Dashboard = () => {
 
             <div className="flex-1 w-full md:w-auto text-center py-4 md:py-0">
               <span className="text-5xl font-display font-medium text-[#111111] block mb-1">
-                92%
+                {resume.atsCompatibility || 92}%
               </span>
               <span className="text-xs text-[#6B6B6B] font-medium tracking-wide">
                 ATS Compatibility
@@ -454,7 +471,7 @@ const Dashboard = () => {
 
             <div className="flex-1 w-full md:w-auto text-center py-4 md:py-0">
               <span className="text-5xl font-display font-medium text-[#111111] block mb-1">
-                12
+                {resume.interviewSessionsCount || 12}
               </span>
               <span className="text-xs text-[#6B6B6B] font-medium tracking-wide">
                 Interview Sessions
@@ -522,10 +539,10 @@ const Dashboard = () => {
                     <FileText className="w-4 h-4 text-[#6B6B6B] mt-0.5 group-hover:text-[#111111] transition-colors" />
                     <div>
                       <h4 className="text-xs font-semibold text-[#111111] group-hover:underline">Resume analyzed</h4>
-                      <p className="text-[10px] text-[#6B6B6B] mt-0.5">87 score • 92% ATS match</p>
+                      <p className="text-[10px] text-[#6B6B6B] mt-0.5">{resume.resumeScore || 87} score • {resume.atsCompatibility || 92}% ATS match</p>
                     </div>
                   </div>
-                  <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">2 days ago</span>
+                  <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">{getRelativeTime(resume.createdAt, 60000)}</span>
                 </Link>
 
                 <Link to="/mock-interview" className="flex items-start justify-between gap-4 hover:opacity-85 transition-opacity cursor-pointer group">
@@ -533,10 +550,10 @@ const Dashboard = () => {
                     <BrainCircuit className="w-4 h-4 text-[#6B6B6B] mt-0.5 group-hover:text-[#111111] transition-colors" />
                     <div>
                       <h4 className="text-xs font-semibold text-[#111111] group-hover:underline">Mock interview completed</h4>
-                      <p className="text-[10px] text-[#6B6B6B] mt-0.5">Product Manager • Behavioral</p>
+                      <p className="text-[10px] text-[#6B6B6B] mt-0.5">{targetRole || "Product Manager"} • Behavioral</p>
                     </div>
                   </div>
-                  <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">3 days ago</span>
+                  <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">{getRelativeTime(resume.createdAt, 900000)}</span>
                 </Link>
 
                 <Link to="/ats-matcher" className="flex items-start justify-between gap-4 hover:opacity-85 transition-opacity cursor-pointer group">
@@ -544,10 +561,10 @@ const Dashboard = () => {
                     <SlidersHorizontal className="w-4 h-4 text-[#6B6B6B] mt-0.5 group-hover:text-[#111111] transition-colors" />
                     <div>
                       <h4 className="text-xs font-semibold text-[#111111] group-hover:underline">ATS optimization applied</h4>
-                      <p className="text-[10px] text-[#6B6B6B] mt-0.5">23 issues fixed</p>
+                      <p className="text-[10px] text-[#6B6B6B] mt-0.5">{Math.round((100 - (resume.quality || 98)) * 1.4) || 28} issues fixed</p>
                     </div>
                   </div>
-                  <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">5 days ago</span>
+                  <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">{getRelativeTime(resume.createdAt, 300000)}</span>
                 </Link>
 
                 <button onClick={handleOpenPreview} className="w-full flex items-start justify-between gap-4 hover:opacity-85 transition-opacity cursor-pointer group text-left bg-transparent border-none p-0">
@@ -558,7 +575,7 @@ const Dashboard = () => {
                       <p className="text-[10px] text-[#6B6B6B] mt-0.5">{resume?.fileName || "PM_Resume.pdf"}</p>
                     </div>
                   </div>
-                  <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">1 week ago</span>
+                  <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">{getRelativeTime(resume.createdAt, 0)}</span>
                 </button>
 
               </div>

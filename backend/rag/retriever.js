@@ -42,34 +42,72 @@ export const retrieveRelevantChunks = async (question, userId) => {
   }
 
   // Fallback to vector search if no exact matches found
-  const queryVector = await embeddings.embedQuery(question);
+  let results = [];
+  try {
+    const queryVector = await embeddings.embedQuery(question);
 
-  // Retrieve more candidates for reranking (e.g., 15)
-  const results = await DocumentChunk.aggregate([
-    {
-      $vectorSearch: {
-        index: "vector_index",
-        path: "embedding",
-        queryVector: queryVector,
-        numCandidates: 100,
-        limit: 15,
-        filter: {
-          userId: new mongoose.Types.ObjectId(userId),
+    // Retrieve more candidates for reranking (e.g., 15)
+    results = await DocumentChunk.aggregate([
+      {
+        $vectorSearch: {
+          index: "vector_index",
+          path: "embedding",
+          queryVector: queryVector,
+          numCandidates: 100,
+          limit: 15,
+          filter: {
+            userId: new mongoose.Types.ObjectId(userId),
+          },
         },
       },
-    },
-    {
-      $project: {
-        content: 1,
-        documentId: 1,
-        section: 1,
-        title: 1,
-        documentName: 1,
-        chunkType: 1,
-        score: { $meta: "vectorSearchScore" },
+      {
+        $project: {
+          content: 1,
+          documentId: 1,
+          section: 1,
+          title: 1,
+          documentName: 1,
+          chunkType: 1,
+          score: { $meta: "vectorSearchScore" },
+        },
       },
-    },
-  ]);
+    ]);
+  } catch (error) {
+    console.warn("Vector search failed, falling back to regex text matching:", error.message);
+    
+    // Extract query terms
+    const queryTerms = question
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, "")
+      .split(/\s+/)
+      .filter(term => term.length >= 3 && !STOPWORDS.has(term));
+
+    // Find chunks for this user
+    const allChunks = await DocumentChunk.find({
+      userId: new mongoose.Types.ObjectId(userId),
+    }).limit(50);
+
+    // Score chunks based on term matching frequency
+    results = allChunks.map((chunk) => {
+      let matchCount = 0;
+      const contentLower = (chunk.content || "").toLowerCase();
+      queryTerms.forEach((term) => {
+        if (contentLower.includes(term)) {
+          matchCount++;
+        }
+      });
+      return {
+        _id: chunk._id,
+        content: chunk.content,
+        documentId: chunk.documentId,
+        section: chunk.section,
+        title: chunk.title,
+        documentName: chunk.documentName,
+        chunkType: chunk.chunkType,
+        score: matchCount > 0 ? 0.5 + matchCount * 0.05 : 0.1,
+      };
+    });
+  }
 
   // Extract search terms from the query (words >= 3 chars, not stopwords)
   const queryTerms = question

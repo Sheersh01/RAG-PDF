@@ -93,7 +93,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
-app.use("/api/documents", apiLimiter, documentRoutes);
+app.use("/api/documents", documentRoutes);
 app.post("/api/chat", apiLimiter, protect, chat);
 app.use("/api/analyze-resume", apiLimiter, resumeRoutes);
 app.use("/api/interview", apiLimiter, interviewRoutes);
