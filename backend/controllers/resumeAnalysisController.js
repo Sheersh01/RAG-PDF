@@ -1,49 +1,50 @@
+import Document from "../models/Document.js";
 import chatModel from "../services/geminiService.js";
-import { retrieveRelevantChunks } from "../rag/retriever.js";
+import { getAllResumeChunks } from "../rag/retriever.js";
 import { buildResumeAnalysisPrompt } from "../rag/promptBuilder.js";
-
-const parseJsonResponse = (text) => {
-  const raw = String(text || "").trim();
-  const withoutCodeFences = raw
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/\s*```$/i, "");
-  const start = withoutCodeFences.indexOf("{");
-  const end = withoutCodeFences.lastIndexOf("}");
-
-  if (start === -1 || end === -1 || end < start) {
-    throw new Error("Model did not return valid JSON");
-  }
-
-  return JSON.parse(withoutCodeFences.slice(start, end + 1));
-};
+import { parseJsonResponse, extractModelContent } from "../utils/parseJson.js";
 
 export const analyzeResume = async (req, res) => {
   try {
-    const chunks = await retrieveRelevantChunks(
-      "Analyze this resume and identify strengths, weaknesses, and improvements.",
-      req.user.id,
-    );
+    const resume = await Document.findOne({ userId: req.user.id, type: "resume" });
+    if (!resume) {
+      return res.status(404).json({
+        success: false,
+        message: "No resume found. Please upload a resume first.",
+      });
+    }
+
+    const chunks = await getAllResumeChunks(req.user.id);
+    if (chunks.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Resume has no indexed chunks. Please re-upload your resume.",
+      });
+    }
 
     const context = chunks.map((chunk) => chunk.content).filter(Boolean);
     const prompt = buildResumeAnalysisPrompt(context);
     const response = await chatModel.invoke(prompt);
-    const content = response?.content ?? response ?? "";
-    const analysis = parseJsonResponse(
-      Array.isArray(content)
-        ? content
-            .map((part) => (typeof part === "string" ? part : part?.text || ""))
-            .join("")
-        : content,
+    const analysis = parseJsonResponse(extractModelContent(response));
+
+    const strengths = Array.isArray(analysis.strengths) ? analysis.strengths : [];
+    const weaknesses = Array.isArray(analysis.weaknesses) ? analysis.weaknesses : [];
+    const improvements = Array.isArray(analysis.improvements) ? analysis.improvements : [];
+
+    await Document.findOneAndUpdate(
+      { userId: req.user.id, type: "resume" },
+      {
+        lastAnalysisAt: new Date(),
+        cachedStrength: strengths[0] || null,
+        cachedImprovement: improvements[0] || weaknesses[0] || null,
+      },
     );
 
     return res.status(200).json({
       success: true,
-      strengths: Array.isArray(analysis.strengths) ? analysis.strengths : [],
-      weaknesses: Array.isArray(analysis.weaknesses) ? analysis.weaknesses : [],
-      improvements: Array.isArray(analysis.improvements)
-        ? analysis.improvements
-        : [],
+      strengths,
+      weaknesses,
+      improvements,
       chunks: context,
     });
   } catch (error) {

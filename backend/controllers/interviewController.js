@@ -1,39 +1,26 @@
+import Document from "../models/Document.js";
 import chatModel from "../services/geminiService.js";
-import { retrieveRelevantChunks } from "../rag/retriever.js";
+import { retrieveRelevantChunks, getAllResumeChunks } from "../rag/retriever.js";
 import { buildInterviewQuestionsPrompt } from "../rag/promptBuilder.js";
-
-const parseJsonResponse = (text) => {
-  const raw = String(text || "").trim();
-  const withoutCodeFences = raw
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/\s*```$/i, "");
-  const start = withoutCodeFences.indexOf("{");
-  const end = withoutCodeFences.lastIndexOf("}");
-
-  if (start === -1 || end === -1 || end < start) {
-    throw new Error("Model did not return valid JSON");
-  }
-
-  return JSON.parse(withoutCodeFences.slice(start, end + 1));
-};
+import { parseJsonResponse, extractModelContent } from "../utils/parseJson.js";
 
 export const generateInterviewQuestions = async (req, res) => {
   try {
     const { topic = "Generate mock interview questions from this resume." } =
       req.body;
 
-    const chunks = await retrieveRelevantChunks(topic, req.user.id);
+    let chunks = await retrieveRelevantChunks(topic, req.user.id);
+    if (chunks.length === 0) {
+      chunks = await getAllResumeChunks(req.user.id);
+    }
     const context = chunks.map((chunk) => chunk.content).filter(Boolean);
     const prompt = buildInterviewQuestionsPrompt(topic, context);
     const response = await chatModel.invoke(prompt);
-    const content = response?.content ?? response ?? "";
-    const result = parseJsonResponse(
-      Array.isArray(content)
-        ? content
-            .map((part) => (typeof part === "string" ? part : part?.text || ""))
-            .join("")
-        : content,
+    const result = parseJsonResponse(extractModelContent(response));
+
+    await Document.findOneAndUpdate(
+      { userId: req.user.id, type: "resume" },
+      { $inc: { mockInterviewCount: 1 } },
     );
 
     return res.status(200).json({

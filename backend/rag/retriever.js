@@ -2,61 +2,139 @@ import mongoose from "mongoose";
 import DocumentChunk from "../models/DocumentChunk.js";
 import { embeddings } from "./embeddingService.js";
 
-// Basic English stopwords to avoid boosting generic words
 const STOPWORDS = new Set([
-  "the", "and", "a", "of", "to", "in", "is", "that", "it", "on", "for", "as", 
+  "the", "and", "a", "of", "to", "in", "is", "that", "it", "on", "for", "as",
   "with", "was", "at", "by", "an", "be", "this", "are", "from", "or", "have",
-  "your", "my", "our", "their", "his", "her", "its", "you", "me", "him", "them"
+  "your", "my", "our", "their", "his", "her", "its", "you", "me", "him", "them",
 ]);
 
-const escapeRegex = (string) => {
-  return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+const paginationRegex =
+  /^(?:page\s*\d+|\(?\s*\d+\s*of\s*\d+\s*\)?|[-—_]*\s*\d+\s*of\s*\d+\s*[-—_]*)$/i;
+
+const escapeRegex = (string) => string.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+
+const toObjectId = (userId) => new mongoose.Types.ObjectId(userId);
+
+const resumeChunkFilter = (userId) => ({
+  userId: toObjectId(userId),
+  $or: [{ chunkType: "resume" }, { chunkType: { $exists: false } }],
+});
+
+const formatChunk = (chunk, score = 0.5) => ({
+  _id: chunk._id,
+  content: chunk.content,
+  documentId: chunk.documentId,
+  section: chunk.section,
+  title: chunk.title,
+  documentName: chunk.documentName,
+  chunkType: chunk.chunkType,
+  score,
+  boostedScore: score,
+});
+
+const extractQueryTerms = (question) =>
+  question
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .split(/\s+/)
+    .filter((term) => term.length >= 3 && !STOPWORDS.has(term));
+
+const keywordFallback = async (userId, question) => {
+  const queryTerms = extractQueryTerms(question);
+  const allChunks = await DocumentChunk.find(resumeChunkFilter(userId)).limit(50);
+
+  if (allChunks.length === 0) {
+    return [];
+  }
+
+  const scored = allChunks.map((chunk) => {
+    let matchCount = 0;
+    const contentLower = (chunk.content || "").toLowerCase();
+    queryTerms.forEach((term) => {
+      if (contentLower.includes(term)) {
+        matchCount++;
+      }
+    });
+    return formatChunk(chunk, matchCount > 0 ? 0.5 + matchCount * 0.05 : 0.1);
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+
+  const hasMatches = scored.some((item) => item.score > 0.1);
+  if (!hasMatches) {
+    return allChunks.map((chunk) => formatChunk(chunk, 0.3));
+  }
+
+  return scored;
+};
+
+export const getAllResumeChunks = async (userId) => {
+  const chunks = await DocumentChunk.find(resumeChunkFilter(userId))
+    .sort({ section: 1, createdAt: 1 })
+    .limit(30);
+
+  return chunks.map((chunk) => formatChunk(chunk, 1.0));
+};
+
+const rerankResults = (results, question) => {
+  const queryTerms = extractQueryTerms(question);
+
+  return results
+    .filter((item) => {
+      const content = (item.content || "").trim();
+      if (content.length < 20 && !/[a-zA-Z]/.test(content)) return false;
+      if (paginationRegex.test(content)) return false;
+      return true;
+    })
+    .map((item) => {
+      const contentLower = (item.content || "").toLowerCase();
+      let keywordScoreBoost = 0;
+
+      queryTerms.forEach((term) => {
+        if (contentLower.includes(term)) {
+          const termRegex = new RegExp(`\\b${term}\\b`, "i");
+          keywordScoreBoost += termRegex.test(contentLower) ? 0.25 : 0.1;
+        }
+      });
+
+      return {
+        ...item,
+        boostedScore: (item.score ?? 0) + keywordScoreBoost,
+      };
+    })
+    .sort((a, b) => b.boostedScore - a.boostedScore);
 };
 
 export const retrieveRelevantChunks = async (question, userId) => {
-  // Phase 1: Exact keyword check
   const trimmedQuery = question.trim();
   const escapedQuery = escapeRegex(trimmedQuery);
+
   if (escapedQuery.length >= 3) {
     const exactMatches = await DocumentChunk.find({
-      userId: new mongoose.Types.ObjectId(userId),
-      content: {
-        $regex: escapedQuery,
-        $options: "i"
-      }
+      ...resumeChunkFilter(userId),
+      content: { $regex: escapedQuery, $options: "i" },
     }).limit(10);
 
     if (exactMatches.length > 0) {
-      return exactMatches.map((m) => ({
-        _id: m._id,
-        content: m.content,
-        documentId: m.documentId,
-        section: m.section,
-        title: m.title,
-        documentName: m.documentName,
-        chunkType: m.chunkType,
-        score: 1.0,
-        boostedScore: 1.0,
-      }));
+      return exactMatches.map((m) => formatChunk(m, 1.0));
     }
   }
 
-  // Fallback to vector search if no exact matches found
   let results = [];
+
   try {
     const queryVector = await embeddings.embedQuery(question);
-
-    // Retrieve more candidates for reranking (e.g., 15)
     results = await DocumentChunk.aggregate([
       {
         $vectorSearch: {
           index: "vector_index",
           path: "embedding",
-          queryVector: queryVector,
+          queryVector,
           numCandidates: 100,
           limit: 15,
           filter: {
-            userId: new mongoose.Types.ObjectId(userId),
+            userId: toObjectId(userId),
+            chunkType: "resume",
           },
         },
       },
@@ -73,87 +151,16 @@ export const retrieveRelevantChunks = async (question, userId) => {
       },
     ]);
   } catch (error) {
-    console.warn("Vector search failed, falling back to regex text matching:", error.message);
-    
-    // Extract query terms
-    const queryTerms = question
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, "")
-      .split(/\s+/)
-      .filter(term => term.length >= 3 && !STOPWORDS.has(term));
-
-    // Find chunks for this user
-    const allChunks = await DocumentChunk.find({
-      userId: new mongoose.Types.ObjectId(userId),
-    }).limit(50);
-
-    // Score chunks based on term matching frequency
-    results = allChunks.map((chunk) => {
-      let matchCount = 0;
-      const contentLower = (chunk.content || "").toLowerCase();
-      queryTerms.forEach((term) => {
-        if (contentLower.includes(term)) {
-          matchCount++;
-        }
-      });
-      return {
-        _id: chunk._id,
-        content: chunk.content,
-        documentId: chunk.documentId,
-        section: chunk.section,
-        title: chunk.title,
-        documentName: chunk.documentName,
-        chunkType: chunk.chunkType,
-        score: matchCount > 0 ? 0.5 + matchCount * 0.05 : 0.1,
-      };
-    });
+    console.warn("Vector search failed, falling back to keyword matching:", error.message);
+    results = await keywordFallback(userId, question);
   }
 
-  // Extract search terms from the query (words >= 3 chars, not stopwords)
-  const queryTerms = question
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, "") // remove punctuation
-    .split(/\s+/)
-    .filter(term => term.length >= 3 && !STOPWORDS.has(term));
+  if (results.length === 0) {
+    console.warn("Vector search returned no results, using keyword fallback.");
+    results = await keywordFallback(userId, question);
+  }
 
-  const paginationRegex = /^(?:page\s*\d+|\(?\s*\d+\s*of\s*\d+\s*\)?|[-—_]*\s*\d+\s*of\s*\d+\s*[-—_]*)$/i;
-
-  const processedResults = results
-    .filter(item => {
-      const content = item.content.trim();
-      // Filter out garbage/pagination chunks
-      if (content.length < 20 && !/[a-zA-Z]/.test(content)) return false;
-      if (paginationRegex.test(content)) return false;
-      return true;
-    })
-    .map(item => {
-      const contentLower = item.content.toLowerCase();
-      let keywordScoreBoost = 0;
-
-      // Calculate keyword matches
-      queryTerms.forEach(term => {
-        if (contentLower.includes(term)) {
-          // If the term is found, check if it's a whole word boundary match or exact match
-          const termRegex = new RegExp(`\\b${term}\\b`, 'i');
-          if (termRegex.test(contentLower)) {
-            keywordScoreBoost += 0.25; // Significant boost for whole word match
-          } else {
-            keywordScoreBoost += 0.1; // Moderate boost for substring match
-          }
-        }
-      });
-
-      return {
-        ...item,
-        boostedScore: item.score + keywordScoreBoost
-      };
-    });
-
-  // Sort by boosted score descending
-  processedResults.sort((a, b) => b.boostedScore - a.boostedScore);
-
-  // Return the top 5 results
-  return processedResults.slice(0, 5);
+  return rerankResults(results, question).slice(0, 5);
 };
 
 export default retrieveRelevantChunks;

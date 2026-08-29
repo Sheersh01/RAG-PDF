@@ -1,0 +1,52 @@
+[
+  {
+    "question": "What React experience do I have?",
+    "expectedKeywords": ["react", "javascript"],
+    "expectedSection": "Skills"
+  },
+  {
+    "question": "Where did I work as a software engineer?",
+    "expectedKeywords": ["engineer", "experience"],
+    "expectedSection": "Experience"
+  },
+  {
+    "question": "What programming languages are listed on my resume?",
+    "expectedKeywords": ["javascript", "python"],
+    "expectedSection": "Skills"
+  },
+  {
+    "question": "What projects have I built?",
+    "expectedKeywords": ["project", "built"],
+    "expectedSection": "Projects"
+  },
+  {
+    "question": "Do I have MongoDB experience?",
+    "expectedKeywords": ["mongodb"],
+    "expectedSection": "Skills"
+  },
+  {
+    "question": "What is my educational background?",
+    "expectedKeywords": ["education", "degree"],
+    "expectedSection": "Education"
+  },
+  {
+    "question": "Have I worked with Node.js?",
+    "expectedKeywords": ["node", "javascript"],
+    "expectedSection": "Experience"
+  },
+  {
+    "question": "What RAG or AI projects are mentioned?",
+    "expectedKeywords": ["rag", "application"],
+    "expectedSection": "Experience"
+  },
+  {
+    "question": "What technical skills do I list?",
+    "expectedKeywords": ["skills", "technical"],
+    "expectedSection": "Skills"
+  },
+  {
+    "question": "What company did I work for?",
+    "expectedKeywords": ["techcorp", "company"],
+    "expectedSection": "Experience"
+  }
+]

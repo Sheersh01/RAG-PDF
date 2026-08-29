@@ -19,10 +19,12 @@ import {
   X,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { clearAnalysisCacheForUser } from "../utils/analysisCache";
 
 const Dashboard = () => {
   const { user } = useAuthStore();
   const [resume, setResume] = useState(null);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -57,12 +59,21 @@ const Dashboard = () => {
       const data = await documentApi.getResume();
       if (data.success && data.document) {
         setResume(data.document);
+        try {
+          const statsData = await documentApi.getResumeStats();
+          if (statsData.success) {
+            setStats(statsData);
+          }
+        } catch {
+          setStats(null);
+        }
       }
     } catch (err) {
       if (err.response?.status !== 404) {
         toast.error("Failed to load resume details.");
       }
       setResume(null);
+      setStats(null);
     } finally {
       setLoading(false);
     }
@@ -142,6 +153,9 @@ const Dashboard = () => {
         toast.success("Resume processed and indexed successfully!", { id: toastId });
         
         setTimeout(() => {
+          if (user?.id) {
+            clearAnalysisCacheForUser(user.id);
+          }
           setResume(data);
           setUploading(false);
           setUploadStage("");
@@ -317,7 +331,12 @@ const Dashboard = () => {
               <div className="flex justify-end pt-2">
                 <button
                   type="button"
-                  onClick={() => setCurrentStep(3)}
+                  onClick={() => {
+                    if (user && targetRole.trim()) {
+                      localStorage.setItem(`targetRole_${user.id}`, targetRole.trim());
+                    }
+                    setCurrentStep(3);
+                  }}
                   disabled={!targetRole.trim()}
                   className="px-5 py-2.5 bg-[#111111] hover:bg-black disabled:opacity-40 disabled:pointer-events-none text-white rounded-lg text-xs font-semibold transition-all cursor-pointer"
                 >
@@ -433,15 +452,15 @@ const Dashboard = () => {
                 <div className="grid grid-cols-3 gap-2 border-t border-[#E8E8E6] pt-4">
                   <div>
                     <span className="text-[9px] font-bold text-[#6B6B6B] uppercase tracking-wider block">Sections</span>
-                    <span className="text-xs font-bold text-[#111111]">{resume.sectionsCount || 12}</span>
+                    <span className="text-xs font-bold text-[#111111]">{resume.sectionsCount ?? 0}</span>
                   </div>
                   <div>
                     <span className="text-[9px] font-bold text-[#6B6B6B] uppercase tracking-wider block">Vectors</span>
-                    <span className="text-xs font-bold text-[#111111]">{resume.vectorsCount || 842}</span>
+                    <span className="text-xs font-bold text-[#111111]">{resume.vectorsCount ?? 0}</span>
                   </div>
                   <div>
                     <span className="text-[9px] font-bold text-[#6B6B6B] uppercase tracking-wider block">Quality</span>
-                    <span className="text-xs font-bold text-[#111111]">{resume.quality || 98}%</span>
+                    <span className="text-xs font-bold text-[#111111]">{resume.quality ?? 0}%</span>
                   </div>
                 </div>
               </div>
@@ -453,28 +472,28 @@ const Dashboard = () => {
             
             <div className="flex-1 w-full md:w-auto text-center py-4 md:py-0">
               <span className="text-5xl font-display font-medium text-[#111111] block mb-1">
-                {resume.resumeScore || 87}
+                {resume.sectionsCount ?? 0}
               </span>
               <span className="text-xs text-[#6B6B6B] font-medium tracking-wide">
-                Resume Score
+                Resume Sections
               </span>
             </div>
 
             <div className="flex-1 w-full md:w-auto text-center py-4 md:py-0">
               <span className="text-5xl font-display font-medium text-[#111111] block mb-1">
-                {resume.atsCompatibility || 92}%
+                {resume.vectorsCount ?? 0}
               </span>
               <span className="text-xs text-[#6B6B6B] font-medium tracking-wide">
-                ATS Compatibility
+                Vector Chunks Indexed
               </span>
             </div>
 
             <div className="flex-1 w-full md:w-auto text-center py-4 md:py-0">
               <span className="text-5xl font-display font-medium text-[#111111] block mb-1">
-                {resume.interviewSessionsCount || 12}
+                {stats?.stats?.lastAtsScore != null ? `${stats.stats.lastAtsScore}%` : "—"}
               </span>
               <span className="text-xs text-[#6B6B6B] font-medium tracking-wide">
-                Interview Sessions
+                Last ATS Score
               </span>
             </div>
           </div>
@@ -486,46 +505,30 @@ const Dashboard = () => {
             <div className="lg:col-span-7 space-y-6">
               <h2 className="text-lg font-bold text-[#111111] pl-1">Insights</h2>
               <div className="border border-[#E8E8E6] bg-white rounded-2xl divide-y divide-[#E8E8E6] overflow-hidden">
-                
-                <Link to="/resume-analyzer" className="p-4 flex items-center justify-between gap-4 hover:bg-[#F8F8F6]/30 transition-colors cursor-pointer group">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#F8F8F6] rounded text-[#111111] group-hover:bg-[#E8E8E6] transition-colors">
-                      <TrendingUp className="w-4 h-4" />
+                {(stats?.insights || []).map((insight, idx) => (
+                  <Link
+                    key={idx}
+                    to={insight.link}
+                    className="p-4 flex items-center justify-between gap-4 hover:bg-[#F8F8F6]/30 transition-colors cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-[#F8F8F6] rounded text-[#111111] group-hover:bg-[#E8E8E6] transition-colors">
+                        {insight.type === "ats" ? (
+                          <Sparkles className="w-4 h-4" />
+                        ) : insight.type === "improvement" ? (
+                          <FileText className="w-4 h-4" />
+                        ) : (
+                          <TrendingUp className="w-4 h-4" />
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-[#111111] group-hover:underline">{insight.title}</h4>
+                        <p className="text-[10px] text-[#6B6B6B] mt-0.5">{insight.subtitle}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-sm font-semibold text-[#111111] group-hover:underline">Strong impact in your experience section</h4>
-                      <p className="text-[10px] text-[#6B6B6B] mt-0.5">Quantified results stand out well.</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-[#6B6B6B]" />
-                </Link>
-
-                <Link to="/resume-analyzer" className="p-4 flex items-center justify-between gap-4 hover:bg-[#F8F8F6]/30 transition-colors cursor-pointer group">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#F8F8F6] rounded text-[#111111] group-hover:bg-[#E8E8E6] transition-colors">
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-semibold text-[#111111] group-hover:underline">Add more metrics to projects</h4>
-                      <p className="text-[10px] text-[#6B6B6B] mt-0.5">Include numbers and percentages.</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-[#6B6B6B]" />
-                </Link>
-
-                <Link to="/ats-matcher" className="p-4 flex items-center justify-between gap-4 hover:bg-[#F8F8F6]/30 transition-colors cursor-pointer group">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#F8F8F6] rounded text-[#111111] group-hover:bg-[#E8E8E6] transition-colors">
-                      <Sparkles className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-semibold text-[#111111] group-hover:underline">Consider adding leadership keywords</h4>
-                      <p className="text-[10px] text-[#6B6B6B] mt-0.5">Improve relevance for senior roles.</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-[#6B6B6B]" />
-                </Link>
-
+                    <ChevronRight className="w-4 h-4 text-[#6B6B6B]" />
+                  </Link>
+                ))}
               </div>
             </div>
 
@@ -533,51 +536,58 @@ const Dashboard = () => {
             <div className="lg:col-span-5 space-y-6">
               <h2 className="text-lg font-bold text-[#111111] pl-1">Recent Activity</h2>
               <div className="border border-[#E8E8E6] bg-white rounded-2xl p-6 space-y-6">
-                
-                <Link to="/resume-analyzer" className="flex items-start justify-between gap-4 hover:opacity-85 transition-opacity cursor-pointer group">
-                  <div className="flex gap-3">
-                    <FileText className="w-4 h-4 text-[#6B6B6B] mt-0.5 group-hover:text-[#111111] transition-colors" />
-                    <div>
-                      <h4 className="text-xs font-semibold text-[#111111] group-hover:underline">Resume analyzed</h4>
-                      <p className="text-[10px] text-[#6B6B6B] mt-0.5">{resume.resumeScore || 87} score • {resume.atsCompatibility || 92}% ATS match</p>
-                    </div>
-                  </div>
-                  <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">{getRelativeTime(resume.createdAt, 60000)}</span>
-                </Link>
+                {(stats?.activity || []).length > 0 ? (
+                  stats.activity.map((item, idx) => {
+                    const linkMap = {
+                      upload: null,
+                      analysis: "/resume-analyzer",
+                      ats: "/ats-matcher",
+                      chat: "/ai-coach",
+                      interview: "/mock-interview",
+                    };
+                    const iconMap = {
+                      upload: Clock,
+                      analysis: FileText,
+                      ats: SlidersHorizontal,
+                      chat: BrainCircuit,
+                      interview: BrainCircuit,
+                    };
+                    const Icon = iconMap[item.type] || Clock;
+                    const link = linkMap[item.type];
 
-                <Link to="/mock-interview" className="flex items-start justify-between gap-4 hover:opacity-85 transition-opacity cursor-pointer group">
-                  <div className="flex gap-3">
-                    <BrainCircuit className="w-4 h-4 text-[#6B6B6B] mt-0.5 group-hover:text-[#111111] transition-colors" />
-                    <div>
-                      <h4 className="text-xs font-semibold text-[#111111] group-hover:underline">Mock interview completed</h4>
-                      <p className="text-[10px] text-[#6B6B6B] mt-0.5">{targetRole || "Product Manager"} • Behavioral</p>
-                    </div>
-                  </div>
-                  <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">{getRelativeTime(resume.createdAt, 900000)}</span>
-                </Link>
+                    const content = (
+                      <div className="flex gap-3">
+                        <Icon className="w-4 h-4 text-[#6B6B6B] mt-0.5 group-hover:text-[#111111] transition-colors" />
+                        <div>
+                          <h4 className="text-xs font-semibold text-[#111111] group-hover:underline">{item.label}</h4>
+                          <p className="text-[10px] text-[#6B6B6B] mt-0.5">{item.detail}</p>
+                        </div>
+                      </div>
+                    );
 
-                <Link to="/ats-matcher" className="flex items-start justify-between gap-4 hover:opacity-85 transition-opacity cursor-pointer group">
-                  <div className="flex gap-3">
-                    <SlidersHorizontal className="w-4 h-4 text-[#6B6B6B] mt-0.5 group-hover:text-[#111111] transition-colors" />
-                    <div>
-                      <h4 className="text-xs font-semibold text-[#111111] group-hover:underline">ATS optimization applied</h4>
-                      <p className="text-[10px] text-[#6B6B6B] mt-0.5">{Math.round((100 - (resume.quality || 98)) * 1.4) || 28} issues fixed</p>
-                    </div>
-                  </div>
-                  <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">{getRelativeTime(resume.createdAt, 300000)}</span>
-                </Link>
-
-                <button onClick={handleOpenPreview} className="w-full flex items-start justify-between gap-4 hover:opacity-85 transition-opacity cursor-pointer group text-left bg-transparent border-none p-0">
-                  <div className="flex gap-3">
-                    <Clock className="w-4 h-4 text-[#6B6B6B] mt-0.5 group-hover:text-[#111111] transition-colors" />
-                    <div>
-                      <h4 className="text-xs font-semibold text-[#111111] group-hover:underline">Resume uploaded</h4>
-                      <p className="text-[10px] text-[#6B6B6B] mt-0.5">{resume?.fileName || "PM_Resume.pdf"}</p>
-                    </div>
-                  </div>
-                  <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">{getRelativeTime(resume.createdAt, 0)}</span>
-                </button>
-
+                    return link ? (
+                      <Link
+                        key={idx}
+                        to={link}
+                        className="flex items-start justify-between gap-4 hover:opacity-85 transition-opacity cursor-pointer group"
+                      >
+                        {content}
+                        <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">{getRelativeTime(item.timestamp)}</span>
+                      </Link>
+                    ) : (
+                      <button
+                        key={idx}
+                        onClick={handleOpenPreview}
+                        className="w-full flex items-start justify-between gap-4 hover:opacity-85 transition-opacity cursor-pointer group text-left bg-transparent border-none p-0"
+                      >
+                        {content}
+                        <span className="text-[9px] text-[#6B6B6B] font-medium mt-0.5">{getRelativeTime(item.timestamp)}</span>
+                      </button>
+                    );
+                  })
+                ) : (
+                  <p className="text-xs text-[#6B6B6B]">No activity yet. Run an analysis or start a mock interview.</p>
+                )}
               </div>
             </div>
 

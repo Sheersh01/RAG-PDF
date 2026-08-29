@@ -14,27 +14,30 @@ const documentSchema = new mongoose.Schema(
     extractedText: String,
     sectionsCount: {
       type: Number,
-      default: 12,
+      default: 0,
     },
     vectorsCount: {
       type: Number,
-      default: 842,
+      default: 0,
     },
     quality: {
       type: Number,
-      default: 98,
+      default: 0,
     },
-    resumeScore: {
-      type: Number,
-      default: 87,
+    sectionTypes: {
+      type: [String],
+      default: [],
     },
-    atsCompatibility: {
+    lastAnalysisAt: Date,
+    cachedStrength: String,
+    cachedImprovement: String,
+    cachedAtsKeyword: String,
+    lastAtsScore: Number,
+    lastAtsAt: Date,
+    lastChatAt: Date,
+    mockInterviewCount: {
       type: Number,
-      default: 92,
-    },
-    interviewSessionsCount: {
-      type: Number,
-      default: 12,
+      default: 0,
     },
   },
   {
@@ -42,5 +45,4 @@ const documentSchema = new mongoose.Schema(
   },
 );
 
-export default mongoose.model("Document", documentSchema);
-
+export default mongoose.models.Document || mongoose.model("Document", documentSchema);

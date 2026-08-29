@@ -1,276 +1,238 @@
-# InterviewPilot: AI-Powered Resume Analysis & Interview Preparation Platform
+# InterviewPilot
 
-InterviewPilot is a production-grade Full-Stack RAG (Retrieval-Augmented Generation) application designed to accelerate candidate interview preparation. By combining modern React features with a robust Express back-end, LangChain, Google Gemini, and MongoDB Atlas Vector Search, the application indexes resumes as semantic vector embeddings to provide hyper-personalized feedback, ATS compatibility scores, mock interview simulators, and real-time coaching with citations.
+**Full-stack RAG application for resume analysis, ATS matching, and AI-powered interview preparation.**
 
----
+> Live Demo: _Deploy using [DEPLOYMENT.md](DEPLOYMENT.md) and add your URLs here_
+>
+> API Docs: `http://localhost:5000/api/docs` (Swagger UI)
 
-## 🚀 Key Features
-
-*   **Secure Cookie Sessions**: Standard HTTP-only sameSite strict session management storing JWT validation secure against XSS.
-*   **Resume Ingestion & Vector Indexing**: 
-    *   Uploads PDF resumes via `multer` capped at a strict 10MB size limit.
-    *   Parses text from PDFs asynchronously using `pdf-parse` protected by a 30-second execution timeout.
-    *   Splits text into chunks of `400` characters with an `80` character overlap via LangChain's `RecursiveCharacterTextSplitter`.
-    *   Generates 3072-dimensional embeddings using the Google Generative AI embeddings model (`gemini-embedding-2`).
-    *   Stores vectorized chunks in MongoDB Atlas using a `$vectorSearch` index.
-*   **Automatic Resume Replacement**: Automatically purges any previous resume documents and their corresponding vector index chunks upon new uploads to prevent context pollution.
-*   **Advanced RAG Search Pipeline**:
-    *   **Hybrid Exact Keyword Pre-search**: Queries Mongoose for exact case-insensitive matches (`$regex` matching) of search queries before running vector searches, returning immediate 100% relevance results for rare entities (e.g. `"TantraFiesta"`, `"Razorpay"`, `"GSAP"`).
-    *   **Resume-Aware Section Chunking**: Parses resumes into structured logical sections (`Experience`, `Projects`, `Skills`, `Education`, `Achievements`, `Certifications`) and extracts sub-titles (e.g. company names, project names) to maintain document hierarchy.
-    *   **Parent-Child Context Embedding**: Generates vectors on contextually enriched chunk strings (prepended with `Section: <name>\nTitle: <title>\n\n`) so dense queries successfully capture structural metadata.
-*   **Aesthetic Search Card UI**: A gorgeous, search results grid showcasing matched keywords (e.g. `✓ tantrafiesta` highlighted in green), relevance percentage labels, section types, and source files.
-*   **Interactive Workspace & Utilities**:
-    *   **Settings Panel**: Allows users to inspect profiles, update target role preferences, and perform a complete workspace index reset (purging all db documents and returning to the onboarding wizard).
-    *   **Help Desk**: Includes accordion-style FAQs and an interactive support ticket generator form.
-    *   **Pro Upgrade Simulation**: A simulated payment form that elevates accounts to "Pro Member" status, replacing upgrade CTAs with premium member badges.
-*   **AI Resume Analyzer**: Reviews parsed resume content and returns structured JSON outlining core strengths, critical gaps, and immediate action items.
-*   **ATS Optimizer / Score Matcher**: Evaluates resume vectors against job descriptions to calculate compatibility scores (0–100%) and pinpoint missing keyword gaps.
-*   **Mock Interview Simulator**: Conducts tailored QA sessions based on resume qualifications and roles, grading submissions with constructive qualitative reviews.
-*   **Interactive AI Coach**: Real-time chat dialogue featuring starter prompts and source citation lookups.
+InterviewPilot indexes PDF resumes as semantic vector embeddings and powers six AI features — resume analysis, ATS scoring, mock interviews, vector search, and streaming AI coaching with source citations.
 
 ---
 
-## 🛠 Tech Stack
+## Architecture
 
-### Frontend
-*   **Vite + React 19**: Super-fast React application compiler.
-*   **Tailwind CSS (v4)**: Modern, responsive glassmorphic interfaces.
-*   **Zustand**: Clean, reactive state store for user context synchronization.
-*   **React Router DOM (v7)**: Route configuration and guard patterns (`PrivateRoute`, `PublicRoute`).
-*   **React Dropzone**: Interactive drag-and-drop file uploader.
-*   **React Hook Form & Zod**: Form schema validations.
-*   **Lucide React**: Clean vector icon suite.
-*   **React Hot Toast**: Action alerts notifications.
+```mermaid
+graph TD
+    subgraph frontend [React Frontend]
+        UI[Vite + React 19]
+        UI --> API[Axios API Client]
+    end
 
-### Backend
-*   **Node.js & Express.js (v5)**: High-performance server engine with request rate limiters.
-*   **Mongoose**: Database model definitions and schemas.
-*   **MongoDB Atlas Vector Search**: Semantic vector KNN matching pipelines.
-*   **LangChain JS**: Manages LLM text splitting and embeddings generation.
-*   **Google Generative AI**: Configurable access to Google Gemini LLMs via environment variables.
-*   **Multer**: Handles file uploads with explicit size limits.
-*   **PDF-Parse**: Local binary stream text converter.
-*   **BcryptJS & JSONWebToken (JWT)**: Auth hashing and session generation.
-
----
-
-## 📂 Project Structure
-
-### Backend
+    subgraph backend [Express Backend]
+        API --> Auth[JWT Auth]
+        API --> Ingest[PDF Ingestion]
+        Ingest --> Chunk[Section-Aware Chunker]
+        Chunk --> Embed[Gemini Embeddings]
+        Embed --> Atlas[(MongoDB Atlas)]
+        API --> Retrieve[Hybrid Retriever]
+        Retrieve --> Atlas
+        Retrieve --> LLM[Gemini 2.5 Flash]
+        LLM --> Stream[SSE Chat Stream]
+    end
 ```
-backend/
-├── config/
-│   └── db.js                 # Mongoose database connection client
-├── controllers/
-│   ├── atsController.js      # Processes ATS matching & parses Gemini JSON responses
-│   ├── authController.js     # User registration, login, logout, and me context
-│   ├── chatController.js     # Manages standard QA prompt generation and model responses
-│   ├── documentController.js  # Uploads, previews, and purges workspace resumes
-│   ├── interviewController.js # Prepares mock QA sessions and responses
-│   ├── ragController.js      # Unused: Retrieves top document chunks and queries Gemini
-│   ├── resumeAnalysisController.js # Compiles strengths, gaps, and improvements
-│   └── searchController.js   # Searches and returns raw metadata-rich document chunks
-├── middleware/
-│   ├── authMiddleware.js     # Verifies cookie JWTs and attaches user payload
-│   └── uploadMiddleware.js   # Multer file configurations (10MB size limit)
-├── models/
-│   ├── Document.js           # Holds parsed text metadata (type, fileName, rawText)
-│   ├── DocumentChunk.js      # Stores 3072-dim vectors, metadata (section, title, etc) & snippets
-│   └── User.js               # Holds user authentication credentials
-├── rag/
-│   ├── chunker.js            # Section-aware resume text parser and chunker
-│   ├── promptBuilder.js      # Builds system prompts for LLM outputs (JSON/text)
-│   ├── prompts.js            # Prepares general QA prompt templates
-│   └── retriever.js          # Exact pre-search checks & vector similarity search pipelines
-├── routes/
-│   ├── atsRoutes.js
-│   ├── authRoutes.js
-│   ├── chatRoutes.js
-│   ├── documentRoutes.js
-│   ├── interviewRoutes.js
-│   ├── ragRoutes.js
-│   ├── resumeRoutes.js
-│   └── searchRoutes.js
-├── services/
-│   ├── geminiService.js      # Unified model instance configuration (gemini-2.5-flash)
-│   └── pdfService.js         # Extracts text blocks from local PDFs (30s timeout)
-├── app.js                    # CORS configuration, log key redaction, & rate limiters
-└── package.json
+
+### RAG Pipeline
+
+1. **Ingest** — PDF upload → text extraction → section-aware chunking (Experience, Skills, Projects, etc.)
+2. **Embed** — 3072-dim vectors via `gemini-embedding-2`, enriched with section/title metadata
+3. **Retrieve** — Hybrid search: exact keyword match → Atlas `$vectorSearch` → keyword rerank fallback
+4. **Generate** — Grounded prompts to Gemini with retrieved chunks; streaming SSE responses with citations
+
+---
+
+## Key Features
+
+- JWT auth with httpOnly cookies and per-user vector isolation
+- Section-aware resume chunking with enriched embedding context
+- Hybrid retrieval (exact match + vector KNN + keyword reranking)
+- Streaming AI Coach with source-attributed citations (section, score, snippet)
+- Resume analysis, ATS keyword matching, mock interview generator
+- Real dashboard metrics from API (no fake scores)
+- OpenAPI docs at `/api/docs`
+- Docker Compose for one-command local setup
+- CI pipeline with Vitest + Supertest integration tests
+
+---
+
+## Tech Stack
+
+| Layer | Technologies |
+|-------|-------------|
+| Frontend | React 19, Vite, Tailwind CSS v4, Zustand, React Router v7, Zod |
+| Backend | Node.js, Express 5, Mongoose, LangChain JS |
+| AI | Google Gemini (`gemini-2.5-flash`, `gemini-embedding-2`) |
+| Database | MongoDB Atlas with Vector Search |
+| DevOps | Docker, GitHub Actions CI, Vitest, Supertest |
+
+---
+
+## Quick Start (Docker)
+
+```bash
+cp backend/.env.example backend/.env
+# Edit backend/.env with your MongoDB Atlas URI and Gemini API key
+
+docker compose up --build
+```
+
+- Frontend: http://localhost:5173
+- Backend: http://localhost:5000
+- API Docs: http://localhost:5000/api/docs
+
+## Manual Setup
+
+### Prerequisites
+
+- Node.js 18+
+- MongoDB Atlas cluster with vector search index (`vector_index` on `documentchunks`)
+
+### Backend
+
+```bash
+cd backend
+npm install
+cp .env.example .env   # configure MONGO_URI, JWT_SECRET, GEMINI_API_KEY
+npm run dev
 ```
 
 ### Frontend
+
+```bash
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
 ```
-frontend/
-├── src/
-│   ├── assets/               # Image/icon assets
-│   ├── components/
-│   │   ├── CircularProgress.jsx # Renders ATS score visual percentages
-│   │   ├── ErrorBoundary.jsx    # React error boundaries catching rendering crashes
-│   │   ├── MainLayout.jsx       # Layout containing sidebar, Settings, Help, & Pro modals
-│   │   ├── PrivateRoute.jsx     # Protects sensitive paths requiring login
-│   │   └── PublicRoute.jsx      # Prevents authenticated users from viewing login/signup
-│   ├── pages/
-│   │   ├── AiCoach.jsx          # Live grounded chat with sources citations
-│   │   ├── AtsMatcher.jsx       # Pastes JDs to calculate compatibility percentages
-│   │   ├── Dashboard.jsx        # Skeleton loaders UI, resume text previewer, & prep tools
-│   │   ├── Login.jsx            # Sign-in portal
-│   │   ├── MockInterview.jsx    # Tailored QA simulation with answer rating
-│   │   ├── Register.jsx         # Sign-up portal
-│   │   ├── ResumeAnalyzer.jsx   # Strengths, weaknesses, and optimization reviews
-│   │   └── ResumeSearch.jsx     # Modern metadata-rich result cards search UI
-│   ├── services/
-│   │   └── api.js               # Intercepted Axios connection maps (withCredentials)
-│   ├── store/
-│   │   └── authStore.js         # zustand global state management (cookie session check)
-│   ├── App.jsx                  # Main browser routing path definitions
-│   ├── index.css                # Base stylesheet and custom Tailwind utilities
-│   └── main.jsx                 # Mounts the React virtual DOM tree
-├── vite.config.js
-│   └── package.json
-```
+
+Open http://localhost:5173
 
 ---
 
-## 🗄 Database Models & Vector Setup
+## Environment Variables
 
-### MongoDB Collections
-1.  **Users (`User`)**
-    *   `name` (String)
-    *   `email` (String, unique)
-    *   `password` (String, hashed)
-2.  **Documents (`Document`)**
-    *   `userId` (ObjectId -> User)
-    *   `type` (String: `"resume" | "jd" | "notes"`)
-    *   `fileName` (String)
-    *   `extractedText` (String)
-3.  **Document Chunks (`DocumentChunk`)**
-    *   `userId` (ObjectId -> User)
-    *   `documentId` (ObjectId -> Document)
-    *   `content` (String)
-    *   `section` (String)
-    *   `title` (String)
-    *   `documentName` (String)
-    *   `chunkType` (String)
-    *   `embedding` (Array of Numbers, size 3072, custom validator protected)
-    *   **Indexes**: Compound index on `{ userId: 1, documentId: 1 }` and a single index on `{ section: 1 }`.
-
-### MongoDB Atlas Vector Search Index Setup (Step-by-Step UI Guide)
-To enable semantic vector search with filtering on your Atlas cluster:
-1. Log in to your MongoDB Atlas dashboard.
-2. Select your Database Deployment and click on the **Search** tab.
-3. Click **Create Search Index** and select **JSON Editor** under **Atlas Vector Search**.
-4. Select your database name and choose the `documentchunks` collection.
-5. Enter **`vector_index`** as the Index Name.
-6. Paste the following configuration supporting filters:
-   ```json
-   {
-     "fields": [
-       {
-         "type": "vector",
-         "path": "embedding",
-         "numDimensions": 3072,
-         "similarity": "cosine"
-       },
-       {
-         "type": "filter",
-         "path": "userId"
-       },
-       {
-         "type": "filter",
-         "path": "section"
-       }
-     ]
-   }
-   ```
-7. Click **Next**, review the setup, and hit **Create Search Index**. Atlas will begin building the index.
-
----
-
-## 🔑 Environment Configuration
-
-Do not copy the production `.env` to git tracking. Use the reference file [backend/.env.example](file:///c:/Users/HP/Desktop/Programming/Projects/Full-Stack/RAG/backend/.env.example) to bootstrap local setup:
+**Backend** (`backend/.env`):
 
 ```env
 PORT=5000
-MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database_name>
-JWT_SECRET=your_super_secure_jwt_secret_key
-GEMINI_API_KEY=AIzaSyYourGeminiApiKeyHere
+MONGO_URI=mongodb+srv://...
+JWT_SECRET=your_secret
+GEMINI_API_KEY=your_key
 GEMINI_MODEL=gemini-2.5-flash
 FRONTEND_URL=http://localhost:5173
 ```
 
-### CORS Policies
-The backend explicitly enables credential-based CORS. When connecting, the incoming client origin must match the `FRONTEND_URL` environment parameter for httpOnly cookie insertion.
+**Frontend** (`frontend/.env`):
+
+```env
+VITE_API_URL=http://localhost:5000/api
+```
 
 ---
 
-## 📡 API Endpoints Reference
+## API Endpoints
 
-### Authentication
-| Method | Endpoint | Description | Request Body |
-| :--- | :--- | :--- | :--- |
-| **POST** | `/api/auth/register` | Register a new account and set cookie | `{ name, email, password }` |
-| **POST** | `/api/auth/login` | Login and set cookie session | `{ email, password }` |
-| **POST** | `/api/auth/logout` | Clear cookie session details | None |
-| **GET** | `/api/auth/me` | Fetch active user profile from session | None |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register user |
+| POST | `/api/auth/login` | Login |
+| GET | `/api/auth/me` | Current user |
+| POST | `/api/documents/resume` | Upload PDF resume |
+| GET | `/api/documents/resume/stats` | Dashboard stats & activity |
+| POST | `/api/documents/jd` | Upload or paste job description |
+| GET | `/api/documents/jd` | Saved JD metadata |
+| DELETE | `/api/documents/jd` | Remove saved JD |
+| POST | `/api/chat` | RAG chat (JSON response) |
+| POST | `/api/chat/stream` | RAG chat (SSE streaming) |
+| GET | `/api/chat/history` | Last 50 chat messages |
+| DELETE | `/api/chat/history` | Clear chat thread |
+| POST | `/api/analyze-resume` | AI resume analysis |
+| POST | `/api/ats-score` | ATS keyword matching |
+| POST | `/api/interview/questions` | Mock interview questions |
+| POST | `/api/search` | Vector chunk search |
+| GET | `/api/health` | Health check |
+| GET | `/api/docs` | Swagger UI |
 
-### Document Management
-| Method | Endpoint | Description | Request Headers & Body |
-| :--- | :--- | :--- | :--- |
-| **POST** | `/api/documents/resume` | Upload PDF and build vector chunks (Capped at 10MB) | `Bearer Cookie` + Multipart File Form |
-| **GET** | `/api/documents/resume` | Fetch active user's resume metadata | `Bearer Cookie` |
-| **GET** | `/api/documents/resume/text` | Fetch active user's full parsed resume text | `Bearer Cookie` |
-| **DELETE** | `/api/documents/resume` | Delete active resume and purge vectorized index | `Bearer Cookie` |
-
-### AI Prep Tools & RAG Pipeline (Protected by Rate Limiting: 15 req/15 min)
-| Method | Endpoint | Description | Request Body |
-| :--- | :--- | :--- | :--- |
-| **POST** | `/api/analyze-resume` | Analyze indexed resume details | None |
-| **POST** | `/api/ats-score` | Compute JD match score & gaps | `{ jobDescription }` |
-| **POST** | `/api/interview/questions` | Generate 3 customized mock questions | `{ topic }` |
-| **POST** | `/api/chat` | Chat with AI Coach (grounded context) | `{ question }` |
-| **POST** | `/api/search` | Search metadata-rich document chunks (pre-search + vector) | `{ question }` |
+Full interactive docs available at `/api/docs` when the server is running.
 
 ---
 
-## 🛠 Installation & Running
+## Testing
 
-### Prerequisites
-*   Node.js (v18 or higher)
-*   MongoDB Atlas Account with a cluster running
+```bash
+# Backend (17 integration tests)
+cd backend && npm test
 
-### Step 1: Clone and install backend dependencies
+# Frontend (5 unit tests)
+cd frontend && npm test
+```
+
+CI runs automatically on push/PR via GitHub Actions (`.github/workflows/ci.yml`).
+
+### Vector search not working?
+
+Run `cd backend && npm run verify:index`. If it fails, follow [docs/ATLAS_VECTOR_INDEX.md](docs/ATLAS_VECTOR_INDEX.md) to create the `vector_index` on your Atlas `documentchunks` collection.
+
+### RAG Evaluation
+
+Measure retrieval quality against a golden question set in `backend/evals/golden.json`:
+
 ```bash
 cd backend
-npm install
+npm run eval
+# Or target a specific user:
+npm run eval -- <userId>
 ```
 
-### Step 2: Configure Backend Environment
-Create the `.env` file inside the `backend/` directory referencing `.env.example`.
+The script reports per-question pass/fail and overall `precision@5` (whether any top-5 chunk matches expected keywords or section). Run after uploading your resume so chunks exist in the database.
 
-### Step 3: Run the Backend server
-```bash
-# Production mode
-npm start
-
-# Development mode (with nodemon)
-npm run dev
-```
-
-### Step 4: Install frontend dependencies
-```bash
-cd ../frontend
-npm install
-```
-
-### Step 5: Run the Frontend application
-```bash
-npm run dev
-```
-Open `http://localhost:5173` (or the port specified by Vite) in your browser.
+| Metric | Result |
+|--------|--------|
+| precision@5 | _Run `npm run eval` with your resume to fill in_ |
 
 ---
 
-## 🧪 Test Coverage
-> [!NOTE]
-> Currently, the codebase is in a diagnostic/prototype deployment state. No automated test suites are integrated yet. Contributions involving Jest/Supertest for API endpoints, or Playwright/React Testing Library for frontend component validation are welcome.
+## Deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for step-by-step instructions to deploy on:
+
+- **Frontend:** Vercel
+- **Backend:** Render (via `render.yaml`)
+- **Database:** MongoDB Atlas
+
+---
+
+## Design Decisions
+
+**Why MongoDB Atlas over Pinecone?**
+Single database for user data, document metadata, and vectors. Atlas Vector Search supports filtered KNN by `userId` for per-user isolation without a separate vector DB.
+
+**Why hybrid retrieval?**
+Exact keyword pre-search catches rare proper nouns (company names, project titles) that pure vector search may miss. Keyword reranking boosts chunks with query term overlap.
+
+**Why section-aware chunking?**
+Resume structure (Experience vs Skills vs Projects) improves retrieval precision. Enriched embedding text (`Section: X\nTitle: Y`) helps the model match intent to the right resume region.
+
+---
+
+## Project Structure
+
+```
+RAG/
+├── backend/          # Express API + RAG pipeline
+│   ├── controllers/  # Route handlers
+│   ├── rag/          # Chunking, retrieval, prompts
+│   ├── tests/        # Vitest + Supertest
+│   └── app.js
+├── frontend/         # React SPA
+│   └── src/
+├── docker-compose.yml
+├── render.yaml       # Render deployment blueprint
+└── DEPLOYMENT.md
+```
+
+---
+
+## License
+
+MIT

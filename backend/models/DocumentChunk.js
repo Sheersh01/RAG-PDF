@@ -37,4 +37,4 @@ const documentChunkSchema = new mongoose.Schema(
 documentChunkSchema.index({ userId: 1, documentId: 1 });
 documentChunkSchema.index({ section: 1 });
 
-export default mongoose.model("DocumentChunk", documentChunkSchema);
+export default mongoose.models.DocumentChunk || mongoose.model("DocumentChunk", documentChunkSchema);

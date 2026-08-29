@@ -4,6 +4,10 @@ import { useAuthStore } from "../store/authStore";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
+  getCachedAnalysis,
+  setCachedAnalysis,
+} from "../utils/analysisCache";
+import {
   Sparkles,
   CheckCircle,
   AlertTriangle,
@@ -21,6 +25,7 @@ const ResumeAnalyzer = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [resumeId, setResumeId] = useState(null);
+  const [resumeUpdatedAt, setResumeUpdatedAt] = useState(null);
 
   const checkResumeStatus = useCallback(async () => {
     try {
@@ -29,8 +34,9 @@ const ResumeAnalyzer = () => {
       if (data.success && data.document) {
         setResumeExists(true);
         setResumeId(data.document._id);
+        setResumeUpdatedAt(data.document.updatedAt);
       }
-    } catch (err) {
+    } catch {
       setResumeExists(false);
     } finally {
       setCheckingResume(false);
@@ -41,18 +47,14 @@ const ResumeAnalyzer = () => {
     checkResumeStatus();
   }, [checkResumeStatus]);
 
-  const runAnalysis = async (rId, force = false) => {
+  const runAnalysis = async (rId, updatedAt, force = false) => {
     if (!rId) return;
 
-    const cacheKey = `analysis_${user?.id || "guest"}_${rId}`;
-    const cached = localStorage.getItem(cacheKey);
-
-    if (cached && !force) {
-      try {
-        setAnalysis(JSON.parse(cached));
+    if (!force) {
+      const cached = getCachedAnalysis(user?.id, rId, updatedAt);
+      if (cached) {
+        setAnalysis(cached);
         return;
-      } catch (e) {
-        localStorage.removeItem(cacheKey);
       }
     }
 
@@ -64,7 +66,7 @@ const ResumeAnalyzer = () => {
       if (data.success) {
         toast.success("Resume analysis generated!", { id: toastId });
         setAnalysis(data);
-        localStorage.setItem(cacheKey, JSON.stringify(data));
+        setCachedAnalysis(user?.id, rId, data);
       } else {
         toast.error("Failed to analyze resume.", { id: toastId });
       }
@@ -81,9 +83,9 @@ const ResumeAnalyzer = () => {
 
   useEffect(() => {
     if (resumeExists && resumeId) {
-      runAnalysis(resumeId);
+      runAnalysis(resumeId, resumeUpdatedAt);
     }
-  }, [resumeExists, resumeId]);
+  }, [resumeExists, resumeId, resumeUpdatedAt]);
 
   if (checkingResume) {
     return (
@@ -146,7 +148,6 @@ const ResumeAnalyzer = () => {
 
   return (
     <div className="space-y-8 animate-fade-in font-sans">
-      {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E8E8E6] pb-6">
         <div>
           <h1 className="text-3xl font-display font-medium text-[#111111] tracking-tight flex items-center gap-3">
@@ -159,7 +160,7 @@ const ResumeAnalyzer = () => {
         </div>
         {!analyzing && analysis && (
           <button
-            onClick={() => runAnalysis(resumeId, true)}
+            onClick={() => runAnalysis(resumeId, resumeUpdatedAt, true)}
             className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-[#E8E8E6] hover:bg-white text-[#111111] text-xs font-semibold transition-all cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -178,7 +179,6 @@ const ResumeAnalyzer = () => {
         </div>
       ) : analysis ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Strengths Card */}
           <div className="bg-white border border-[#E8E8E6] rounded-2xl p-6 flex flex-col h-full shadow-sm hover:border-[#111111]/30 transition-all">
             <div className="flex items-center gap-3 border-b border-[#E8E8E6] pb-4 mb-4">
               <div className="w-10 h-10 rounded-xl bg-[#4E7C59]/10 text-[#4E7C59] flex items-center justify-center">
@@ -205,7 +205,6 @@ const ResumeAnalyzer = () => {
             )}
           </div>
 
-          {/* Weaknesses Card */}
           <div className="bg-white border border-[#E8E8E6] rounded-2xl p-6 flex flex-col h-full shadow-sm hover:border-[#111111]/30 transition-all">
             <div className="flex items-center gap-3 border-b border-[#E8E8E6] pb-4 mb-4">
               <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-700 flex items-center justify-center">
@@ -232,7 +231,6 @@ const ResumeAnalyzer = () => {
             )}
           </div>
 
-          {/* Improvements Card */}
           <div className="bg-white border border-[#E8E8E6] rounded-2xl p-6 flex flex-col h-full shadow-sm hover:border-[#111111]/30 transition-all">
             <div className="flex items-center gap-3 border-b border-[#E8E8E6] pb-4 mb-4">
               <div className="w-10 h-10 rounded-xl bg-[#111111]/5 text-[#111111] flex items-center justify-center">
@@ -264,7 +262,7 @@ const ResumeAnalyzer = () => {
           <Info className="w-12 h-12 text-[#6B6B6B] mx-auto mb-4" />
           <p className="text-sm text-[#6B6B6B]">Ready to analyze your resume.</p>
           <button
-            onClick={runAnalysis}
+            onClick={() => runAnalysis(resumeId, resumeUpdatedAt)}
             className="mt-4 px-5 py-2 bg-[#111111] hover:bg-black text-white rounded-lg text-xs font-semibold cursor-pointer"
           >
             Trigger Analysis

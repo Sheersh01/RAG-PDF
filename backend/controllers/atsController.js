@@ -1,53 +1,63 @@
+import Document from "../models/Document.js";
 import chatModel from "../services/geminiService.js";
 import { retrieveRelevantChunks } from "../rag/retriever.js";
 import { buildAtsScorePrompt } from "../rag/promptBuilder.js";
-
-const parseJsonResponse = (text) => {
-  const raw = String(text || "").trim();
-  const withoutCodeFences = raw
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/\s*```$/i, "");
-  const start = withoutCodeFences.indexOf("{");
-  const end = withoutCodeFences.lastIndexOf("}");
-
-  if (start === -1 || end === -1 || end < start) {
-    throw new Error("Model did not return valid JSON");
-  }
-
-  return JSON.parse(withoutCodeFences.slice(start, end + 1));
-};
+import { parseJsonResponse, extractModelContent } from "../utils/parseJson.js";
 
 export const scoreAtsMatch = async (req, res) => {
   try {
-    const { jobDescription } = req.body;
+    const { jobDescription, useSavedJd } = req.body;
+    let jdText = jobDescription?.trim() || "";
 
-    if (!jobDescription || !jobDescription.trim()) {
+    if (useSavedJd) {
+      const savedJd = await Document.findOne({
+        userId: req.user.id,
+        type: "jd",
+      });
+
+      if (!savedJd?.extractedText) {
+        return res.status(404).json({
+          success: false,
+          message: "No saved job description found. Upload or paste a JD first.",
+        });
+      }
+
+      jdText = savedJd.extractedText;
+    }
+
+    if (!jdText) {
       return res.status(400).json({
         success: false,
         message: "jobDescription is required",
       });
     }
 
-    const chunks = await retrieveRelevantChunks(jobDescription, req.user.id);
+    const chunks = await retrieveRelevantChunks(jdText, req.user.id);
     const context = chunks.map((chunk) => chunk.content).filter(Boolean);
-    const prompt = buildAtsScorePrompt(jobDescription, context);
+    const prompt = buildAtsScorePrompt(jdText, context);
     const response = await chatModel.invoke(prompt);
-    const content = response?.content ?? response ?? "";
-    const result = parseJsonResponse(
-      Array.isArray(content)
-        ? content
-            .map((part) => (typeof part === "string" ? part : part?.text || ""))
-            .join("")
-        : content,
+    const result = parseJsonResponse(extractModelContent(response));
+
+    const score = Number.isFinite(Number(result.score)) ? Number(result.score) : 0;
+    const missingSkills = Array.isArray(result.missingSkills) ? result.missingSkills : [];
+
+    await Document.findOneAndUpdate(
+      { userId: req.user.id, type: "resume" },
+      {
+        lastAtsScore: score,
+        lastAtsAt: new Date(),
+        cachedAtsKeyword: missingSkills[0]
+          ? `Consider adding: ${missingSkills[0]}`
+          : score >= 80
+            ? "Strong keyword alignment with job description"
+            : "Review keyword gaps for this role",
+      },
     );
 
     return res.status(200).json({
       success: true,
-      score: Number.isFinite(Number(result.score)) ? Number(result.score) : 0,
-      missingSkills: Array.isArray(result.missingSkills)
-        ? result.missingSkills
-        : [],
+      score,
+      missingSkills,
       chunks: context,
     });
   } catch (error) {
