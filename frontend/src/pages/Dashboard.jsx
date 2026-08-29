@@ -7,9 +7,7 @@ import {
   FileText,
   UploadCloud,
   CheckCircle2,
-  AlertCircle,
   Loader2,
-  Calendar,
   Sparkles,
   SlidersHorizontal,
   BrainCircuit,
@@ -55,7 +53,6 @@ const Dashboard = () => {
 
   const fetchResume = useCallback(async () => {
     try {
-      setLoading(true);
       const data = await documentApi.getResume();
       if (data.success && data.document) {
         setResume(data.document);
@@ -80,17 +77,36 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    fetchResume();
+    let cancelled = false;
+
+    (async () => {
+      await fetchResume();
+      if (cancelled) return;
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [fetchResume]);
 
+  const userId = user?.id ?? "";
+
   useEffect(() => {
-    if (user) {
-      const savedRole = localStorage.getItem(`targetRole_${user.id}`);
-      if (savedRole) {
+    if (!userId) return;
+
+    let cancelled = false;
+
+    (async () => {
+      const savedRole = localStorage.getItem(`targetRole_${userId}`) || "";
+      if (!cancelled) {
         setTargetRole(savedRole);
       }
-    }
-  }, [user]);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   // Listen for storage events to sync target role preference dynamically
   useEffect(() => {
@@ -178,7 +194,7 @@ const Dashboard = () => {
       console.error(err);
       toast.error(err.response?.data?.message || "Error uploading resume.", { id: toastId });
     }
-  }, []);
+  }, [user]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

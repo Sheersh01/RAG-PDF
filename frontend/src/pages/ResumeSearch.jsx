@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
-import { searchApi, documentApi } from "../services/api";
+import { useState } from "react";
+import { searchApi } from "../services/api";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useResumeStatus } from "../hooks/useResumeStatus";
 import {
   Search,
   FileWarning,
@@ -11,30 +12,11 @@ import {
 } from "lucide-react";
 
 const ResumeSearch = () => {
-  const [resumeExists, setResumeExists] = useState(false);
-  const [checkingResume, setCheckingResume] = useState(true);
+  const { resumeExists, checkingResume } = useResumeStatus();
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [chunks, setChunks] = useState([]);
   const [searched, setSearched] = useState(false);
-
-  const checkResumeStatus = useCallback(async () => {
-    try {
-      setCheckingResume(true);
-      const data = await documentApi.getResume();
-      if (data.success && data.document) {
-        setResumeExists(true);
-      }
-    } catch (err) {
-      setResumeExists(false);
-    } finally {
-      setCheckingResume(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkResumeStatus();
-  }, [checkResumeStatus]);
 
   const handleSearchSubmit = async (e) => {
     e.preventDefault();

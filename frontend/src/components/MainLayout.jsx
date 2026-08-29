@@ -14,14 +14,160 @@ import {
   Menu,
   X,
   BrainCircuit,
-  User,
-  ChevronUp,
   MessagesSquare,
   ChevronDown,
   ShieldCheck,
   Trash2,
   SlidersHorizontal,
 } from "lucide-react";
+
+const baseNavItems = [
+  {
+    label: "Overview",
+    path: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    label: "Analysis",
+    path: "/resume-analyzer",
+    icon: Sparkles,
+  },
+  {
+    label: "ATS Matcher",
+    path: "/ats-matcher",
+    icon: SlidersHorizontal,
+  },
+  {
+    label: "Preparation",
+    path: "/mock-interview",
+    icon: BrainCircuit,
+  },
+  {
+    label: "AI Coach",
+    path: "/ai-coach",
+    icon: MessagesSquare,
+  },
+  {
+    label: "Search",
+    path: "/resume-search",
+    icon: Search,
+  },
+];
+
+function SidebarContent({
+  location,
+  isPro,
+  user,
+  onSettingsOpen,
+  onHelpOpen,
+  onLogout,
+}) {
+  return (
+    <div className="flex flex-col h-full bg-[#FFFFFF] border-r border-[#E8E8E6] py-6 px-6 font-sans">
+      <div className="flex items-center gap-2 mb-8">
+        <div className="w-6 h-6 rounded bg-[#111111] flex items-center justify-center text-white font-bold text-xs">
+          ip
+        </div>
+        <h1 className="font-display text-lg font-bold text-[#111111] tracking-tight">
+          InterviewPilot
+        </h1>
+      </div>
+
+      <span className="text-[10px] text-[#6B6B6B] font-bold tracking-widest uppercase mb-4 pl-1">
+        Workspace
+      </span>
+
+      <nav className="space-y-1">
+        {baseNavItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-all text-sm ${
+                isActive
+                  ? "bg-[#E8E8E6]/40 text-[#111111] font-bold"
+                  : "text-[#6B6B6B] hover:text-[#111111] hover:bg-[#E8E8E6]/20 font-medium"
+              }`}
+            >
+              <span className="flex items-center gap-3">
+                <item.icon className={`w-4 h-4 ${isActive ? "text-[#111111]" : "text-[#6B6B6B]"}`} />
+                {item.label}
+              </span>
+              {isActive && (
+                <div className="w-1.5 h-1.5 rounded-full bg-[#111111]"></div>
+              )}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="h-px bg-[#E8E8E6] my-6"></div>
+
+      <div className="space-y-1">
+        <button
+          onClick={onSettingsOpen}
+          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm text-[#6B6B6B] hover:text-[#111111] hover:bg-[#E8E8E6]/20 font-medium text-left cursor-pointer"
+        >
+          <Settings className="w-4 h-4 text-[#6B6B6B]" />
+          Settings
+        </button>
+        <button
+          onClick={onHelpOpen}
+          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm text-[#6B6B6B] hover:text-[#111111] hover:bg-[#E8E8E6]/20 font-medium text-left cursor-pointer"
+        >
+          <HelpCircle className="w-4 h-4 text-[#6B6B6B]" />
+          Help
+        </button>
+      </div>
+
+      {!isPro ? (
+        <div className="mt-8 p-4 rounded-xl border border-[#E8E8E6] bg-[#F8F8F6] space-y-2 select-none">
+          <h4 className="text-xs font-semibold text-[#111111]">Pro Features</h4>
+          <p className="text-[10px] text-[#6B6B6B] leading-relaxed">
+            Advanced analytics and unlimited sessions — coming soon.
+          </p>
+          <span className="text-[10px] font-bold text-[#6B6B6B] uppercase tracking-wider">
+            Coming Soon
+          </span>
+        </div>
+      ) : (
+        <div className="mt-8 p-4 rounded-xl border border-[#4E7C59]/30 bg-[#4E7C59]/5 flex items-center justify-between select-none">
+          <div>
+            <span className="text-[9px] font-bold text-[#4E7C59] uppercase tracking-widest block">Subscription</span>
+            <span className="text-xs font-bold text-[#111111] flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#4E7C59]" />
+              Pro Member
+            </span>
+          </div>
+          <div className="w-2 h-2 rounded-full bg-[#4E7C59] animate-pulse"></div>
+        </div>
+      )}
+
+      <div className="mt-auto pt-6 border-t border-[#E8E8E6] flex items-center justify-between gap-3">
+        <button
+          onClick={onSettingsOpen}
+          className="flex items-center gap-3 min-w-0 text-left cursor-pointer hover:opacity-80 transition-opacity"
+        >
+          <div className="w-8 h-8 rounded-full bg-[#E8E8E6] flex items-center justify-center text-[#111111] text-xs font-bold shrink-0">
+            {user?.name ? user.name.substring(0, 2).toUpperCase() : "US"}
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-[#111111] truncate">{user?.name || "User"}</p>
+            <p className="text-[10px] text-[#6B6B6B] truncate">{user?.email || ""}</p>
+          </div>
+        </button>
+        <button
+          onClick={onLogout}
+          title="Logout"
+          className="p-1 rounded hover:bg-[#E8E8E6]/60 text-[#6B6B6B] hover:text-[#111111] transition-all cursor-pointer"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 const MainLayout = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -32,68 +178,27 @@ const MainLayout = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState(null);
-
-  // Pro Subscription local state
-  const [isPro, setIsPro] = useState(() => {
-    return localStorage.getItem("isPro") === "true";
-  });
-
-  // Settings values
+  const [prefsVersion, setPrefsVersion] = useState(0);
   const [targetRoleInput, setTargetRoleInput] = useState("");
 
-  useEffect(() => {
+  const isPro = user
+    ? localStorage.getItem(`isPro_${user.id}`) === "true"
+    : localStorage.getItem("isPro") === "true";
+  void prefsVersion;
+
+  const openSettings = () => {
     if (user) {
-      setIsPro(localStorage.getItem(`isPro_${user.id}`) === "true");
       setTargetRoleInput(localStorage.getItem(`targetRole_${user.id}`) || "");
     }
-  }, [user]);
+    setIsSettingsOpen(true);
+  };
 
-  // Sync state changes across potential tabs or triggers
+  // Sync preference reads across browser tabs
   useEffect(() => {
-    const handleStorageChange = () => {
-      if (user) {
-        setIsPro(localStorage.getItem(`isPro_${user.id}`) === "true");
-        setTargetRoleInput(localStorage.getItem(`targetRole_${user.id}`) || "");
-      }
-    };
+    const handleStorageChange = () => setPrefsVersion((version) => version + 1);
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
-  }, [user]);
-
-  const baseNavItems = [
-    {
-      label: "Overview",
-      path: "/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      label: "Analysis",
-      path: "/resume-analyzer",
-      icon: Sparkles,
-    },
-    {
-      label: "ATS Matcher",
-      path: "/ats-matcher",
-      icon: SlidersHorizontal,
-    },
-    {
-      label: "Preparation",
-      path: "/mock-interview",
-      icon: BrainCircuit,
-    },
-    {
-      label: "AI Coach",
-      path: "/ai-coach",
-      icon: MessagesSquare,
-    },
-    {
-      label: "Search",
-      path: "/resume-search",
-      icon: Search,
-    },
-  ];
-
-  const navItems = baseNavItems;
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -123,126 +228,20 @@ const MainLayout = () => {
     }
   };
 
-  const activeItem = navItems.find((item) => location.pathname === item.path) || navItems[0];
-
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-[#FFFFFF] border-r border-[#E8E8E6] py-6 px-6 font-sans">
-      {/* Logo Section */}
-      <div className="flex items-center gap-2 mb-8">
-        <div className="w-6 h-6 rounded bg-[#111111] flex items-center justify-center text-white font-bold text-xs">
-          ip
-        </div>
-        <h1 className="font-display text-lg font-bold text-[#111111] tracking-tight">
-          InterviewPilot
-        </h1>
-      </div>
-
-      {/* Workspace label */}
-      <span className="text-[10px] text-[#6B6B6B] font-bold tracking-widest uppercase mb-4 pl-1">
-        Workspace
-      </span>
-
-      {/* Navigation Links */}
-      <nav className="space-y-1">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-all text-sm ${
-                isActive
-                  ? "bg-[#E8E8E6]/40 text-[#111111] font-bold"
-                  : "text-[#6B6B6B] hover:text-[#111111] hover:bg-[#E8E8E6]/20 font-medium"
-              }`}
-            >
-              <span className="flex items-center gap-3">
-                <item.icon className={`w-4 h-4 ${isActive ? 'text-[#111111]' : 'text-[#6B6B6B]'}`} />
-                {item.label}
-              </span>
-              {isActive && (
-                <div className="w-1.5 h-1.5 rounded-full bg-[#111111]"></div>
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Divider */}
-      <div className="h-px bg-[#E8E8E6] my-6"></div>
-
-      {/* Bottom Nav Links */}
-      <div className="space-y-1">
-        <button
-          onClick={() => setIsSettingsOpen(true)}
-          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm text-[#6B6B6B] hover:text-[#111111] hover:bg-[#E8E8E6]/20 font-medium text-left cursor-pointer"
-        >
-          <Settings className="w-4 h-4 text-[#6B6B6B]" />
-          Settings
-        </button>
-        <button
-          onClick={() => setIsHelpOpen(true)}
-          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm text-[#6B6B6B] hover:text-[#111111] hover:bg-[#E8E8E6]/20 font-medium text-left cursor-pointer"
-        >
-          <HelpCircle className="w-4 h-4 text-[#6B6B6B]" />
-          Help
-        </button>
-      </div>
-
-      {/* Promo banner or Pro status */}
-      {!isPro ? (
-        <div className="mt-8 p-4 rounded-xl border border-[#E8E8E6] bg-[#F8F8F6] space-y-2 select-none">
-          <h4 className="text-xs font-semibold text-[#111111]">Pro Features</h4>
-          <p className="text-[10px] text-[#6B6B6B] leading-relaxed">
-            Advanced analytics and unlimited sessions — coming soon.
-          </p>
-          <span className="text-[10px] font-bold text-[#6B6B6B] uppercase tracking-wider">
-            Coming Soon
-          </span>
-        </div>
-      ) : (
-        <div className="mt-8 p-4 rounded-xl border border-[#4E7C59]/30 bg-[#4E7C59]/5 flex items-center justify-between select-none">
-          <div>
-            <span className="text-[9px] font-bold text-[#4E7C59] uppercase tracking-widest block">Subscription</span>
-            <span className="text-xs font-bold text-[#111111] flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#4E7C59]" />
-              Pro Member
-            </span>
-          </div>
-          <div className="w-2 h-2 rounded-full bg-[#4E7C59] animate-pulse"></div>
-        </div>
-      )}
-
-      {/* User Profile pinned to bottom */}
-      <div className="mt-auto pt-6 border-t border-[#E8E8E6] flex items-center justify-between gap-3">
-        <button
-          onClick={() => setIsSettingsOpen(true)}
-          className="flex items-center gap-3 min-w-0 text-left cursor-pointer hover:opacity-80 transition-opacity"
-        >
-          <div className="w-8 h-8 rounded-full bg-[#E8E8E6] flex items-center justify-center text-[#111111] text-xs font-bold shrink-0">
-            {user?.name ? user.name.substring(0, 2).toUpperCase() : "US"}
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold text-[#111111] truncate">{user?.name || "User"}</p>
-            <p className="text-[10px] text-[#6B6B6B] truncate">{user?.email || ""}</p>
-          </div>
-        </button>
-        <button
-          onClick={handleLogout}
-          title="Logout"
-          className="p-1 rounded hover:bg-[#E8E8E6]/60 text-[#6B6B6B] hover:text-[#111111] transition-all cursor-pointer"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </div>
-  );
+  const sidebarProps = {
+    location,
+    isPro,
+    user,
+    onSettingsOpen: openSettings,
+    onHelpOpen: () => setIsHelpOpen(true),
+    onLogout: handleLogout,
+  };
 
   return (
     <div className="min-h-screen bg-[#F8F8F6] text-[#111111] flex relative overflow-hidden font-sans">
       {/* Sidebar for Desktop */}
       <aside className="hidden md:block w-72 shrink-0 h-screen z-30">
-        <SidebarContent />
+        <SidebarContent {...sidebarProps} />
       </aside>
 
       {/* Mobile Header Bar */}
@@ -280,7 +279,7 @@ const MainLayout = () => {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <SidebarContent />
+              <SidebarContent {...sidebarProps} />
             </div>
           </aside>
         </div>

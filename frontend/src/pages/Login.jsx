@@ -4,7 +4,7 @@ import * as z from "zod";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import toast from "react-hot-toast";
-import { LogIn, Mail, Lock, Loader2, BrainCircuit } from "lucide-react";
+import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email address"),

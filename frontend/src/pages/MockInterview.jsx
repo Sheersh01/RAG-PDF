@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
-import { interviewApi, chatApi, documentApi } from "../services/api";
+import { useState } from "react";
+import { interviewApi, chatApi } from "../services/api";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useResumeStatus } from "../hooks/useResumeStatus";
 import {
   BrainCircuit,
   FileWarning,
@@ -16,8 +17,7 @@ import {
 } from "lucide-react";
 
 const MockInterview = () => {
-  const [resumeExists, setResumeExists] = useState(false);
-  const [checkingResume, setCheckingResume] = useState(true);
+  const { resumeExists, checkingResume } = useResumeStatus();
 
   // States for flow management: 'setup' | 'active' | 'summary'
   const [stage, setStage] = useState("setup");
@@ -32,24 +32,6 @@ const MockInterview = () => {
   
   // Array of { question, answer, feedback }
   const [qaHistory, setQaHistory] = useState([]);
-
-  const checkResumeStatus = useCallback(async () => {
-    try {
-      setCheckingResume(true);
-      const data = await documentApi.getResume();
-      if (data.success && data.document) {
-        setResumeExists(true);
-      }
-    } catch (err) {
-      setResumeExists(false);
-    } finally {
-      setCheckingResume(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkResumeStatus();
-  }, [checkResumeStatus]);
 
   const handleGenerateQuestions = async (e) => {
     e.preventDefault();

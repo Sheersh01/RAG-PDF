@@ -4,7 +4,7 @@ import * as z from "zod";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import toast from "react-hot-toast";
-import { UserPlus, Mail, Lock, User, Loader2, BrainCircuit } from "lucide-react";
+import { UserPlus, Mail, Lock, User, Loader2 } from "lucide-react";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),

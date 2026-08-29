@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from "react";
-import { analysisApi, documentApi } from "../services/api";
+import { useEffect, useState } from "react";
+import { analysisApi } from "../services/api";
 import { useAuthStore } from "../store/authStore";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useResumeStatus } from "../hooks/useResumeStatus";
 import {
   getCachedAnalysis,
   setCachedAnalysis,
@@ -20,32 +21,12 @@ import {
 
 const ResumeAnalyzer = () => {
   const { user } = useAuthStore();
-  const [resumeExists, setResumeExists] = useState(false);
-  const [checkingResume, setCheckingResume] = useState(true);
+  const { resumeExists, checkingResume, resumeDocument } = useResumeStatus();
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
-  const [resumeId, setResumeId] = useState(null);
-  const [resumeUpdatedAt, setResumeUpdatedAt] = useState(null);
 
-  const checkResumeStatus = useCallback(async () => {
-    try {
-      setCheckingResume(true);
-      const data = await documentApi.getResume();
-      if (data.success && data.document) {
-        setResumeExists(true);
-        setResumeId(data.document._id);
-        setResumeUpdatedAt(data.document.updatedAt);
-      }
-    } catch {
-      setResumeExists(false);
-    } finally {
-      setCheckingResume(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkResumeStatus();
-  }, [checkResumeStatus]);
+  const resumeId = resumeDocument?._id;
+  const resumeUpdatedAt = resumeDocument?.updatedAt;
 
   const runAnalysis = async (rId, updatedAt, force = false) => {
     if (!rId) return;
@@ -82,10 +63,52 @@ const ResumeAnalyzer = () => {
   };
 
   useEffect(() => {
-    if (resumeExists && resumeId) {
-      runAnalysis(resumeId, resumeUpdatedAt);
-    }
-  }, [resumeExists, resumeId, resumeUpdatedAt]);
+    if (!resumeId) return;
+
+    let cancelled = false;
+
+    (async () => {
+      const cached = getCachedAnalysis(user?.id, resumeId, resumeUpdatedAt);
+      if (cancelled) return;
+
+      if (cached) {
+        setAnalysis(cached);
+        return;
+      }
+
+      setAnalyzing(true);
+      setAnalysis(null);
+      const toastId = toast.loading("Analyzing resume structures and contents...");
+      try {
+        const data = await analysisApi.analyzeResume();
+        if (cancelled) return;
+
+        if (data.success) {
+          toast.success("Resume analysis generated!", { id: toastId });
+          setAnalysis(data);
+          setCachedAnalysis(user?.id, resumeId, data);
+        } else {
+          toast.error("Failed to analyze resume.", { id: toastId });
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error(err);
+          toast.error(
+            err.response?.data?.message || "Error running AI resume review.",
+            { id: toastId }
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setAnalyzing(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [resumeId, resumeUpdatedAt, user?.id]);
 
   if (checkingResume) {
     return (

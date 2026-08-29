@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef, useCallback } from "react";
-import { chatApi, documentApi } from "../services/api";
+import { useEffect, useState, useRef } from "react";
+import { chatApi } from "../services/api";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useResumeStatus } from "../hooks/useResumeStatus";
 import {
   MessagesSquare,
   FileWarning,
@@ -23,9 +24,8 @@ const WELCOME_MESSAGE = {
 };
 
 const AiCoach = () => {
-  const [resumeExists, setResumeExists] = useState(false);
-  const [checkingResume, setCheckingResume] = useState(true);
-  const [loadingHistory, setLoadingHistory] = useState(true);
+  const { resumeExists, checkingResume } = useResumeStatus();
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [inputMessage, setInputMessage] = useState("");
@@ -33,52 +33,44 @@ const AiCoach = () => {
   const [expandedCitationIndex, setExpandedCitationIndex] = useState(null);
 
   const messagesEndRef = useRef(null);
-
-  const checkResumeStatus = useCallback(async () => {
-    try {
-      setCheckingResume(true);
-      const data = await documentApi.getResume();
-      if (data.success && data.document) {
-        setResumeExists(true);
-      }
-    } catch {
-      setResumeExists(false);
-    } finally {
-      setCheckingResume(false);
-    }
-  }, []);
+  const loadingHistory = resumeExists && !historyLoaded;
 
   useEffect(() => {
-    checkResumeStatus();
-  }, [checkResumeStatus]);
+    if (!resumeExists) return;
 
-  const loadChatHistory = useCallback(async () => {
-    try {
-      setLoadingHistory(true);
-      const data = await chatApi.getHistory();
-      if (data.success && data.messages?.length > 0) {
-        setMessages(
-          data.messages.map((msg) => ({
-            sender: msg.role === "user" ? "user" : "ai",
-            text: msg.content,
-            sources: msg.sources || [],
-          })),
-        );
-      } else {
-        setMessages([WELCOME_MESSAGE]);
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const data = await chatApi.getHistory();
+        if (cancelled) return;
+
+        if (data.success && data.messages?.length > 0) {
+          setMessages(
+            data.messages.map((msg) => ({
+              sender: msg.role === "user" ? "user" : "ai",
+              text: msg.content,
+              sources: msg.sources || [],
+            })),
+          );
+        } else {
+          setMessages([WELCOME_MESSAGE]);
+        }
+      } catch {
+        if (!cancelled) {
+          setMessages([WELCOME_MESSAGE]);
+        }
+      } finally {
+        if (!cancelled) {
+          setHistoryLoaded(true);
+        }
       }
-    } catch {
-      setMessages([WELCOME_MESSAGE]);
-    } finally {
-      setLoadingHistory(false);
-    }
-  }, []);
+    })();
 
-  useEffect(() => {
-    if (resumeExists) {
-      loadChatHistory();
-    }
-  }, [resumeExists, loadChatHistory]);
+    return () => {
+      cancelled = true;
+    };
+  }, [resumeExists]);
 
   const handleClearHistory = async () => {
     if (!window.confirm("Clear your chat history? This cannot be undone.")) return;
@@ -86,6 +78,7 @@ const AiCoach = () => {
     try {
       await chatApi.clearHistory();
       setMessages([WELCOME_MESSAGE]);
+      setHistoryLoaded(true);
       toast.success("Chat history cleared.", { id: toastId });
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to clear history.", { id: toastId });

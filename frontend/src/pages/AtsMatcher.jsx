@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { atsApi, documentApi } from "../services/api";
 import { Link } from "react-router-dom";
 import CircularProgress from "../components/CircularProgress";
 import toast from "react-hot-toast";
+import { useResumeStatus } from "../hooks/useResumeStatus";
 import {
   SlidersHorizontal,
   FileWarning,
@@ -16,8 +17,7 @@ import {
 } from "lucide-react";
 
 const AtsMatcher = () => {
-  const [resumeExists, setResumeExists] = useState(false);
-  const [checkingResume, setCheckingResume] = useState(true);
+  const { resumeExists, checkingResume } = useResumeStatus();
   const [jdMode, setJdMode] = useState("saved");
   const [savedJd, setSavedJd] = useState(null);
   const [loadingJd, setLoadingJd] = useState(true);
@@ -28,40 +28,34 @@ const AtsMatcher = () => {
   const [result, setResult] = useState(null);
   const fileInputRef = useRef(null);
 
-  const checkResumeStatus = useCallback(async () => {
-    try {
-      setCheckingResume(true);
-      const data = await documentApi.getResume();
-      if (data.success && data.document) {
-        setResumeExists(true);
-      }
-    } catch {
-      setResumeExists(false);
-    } finally {
-      setCheckingResume(false);
-    }
-  }, []);
-
-  const loadSavedJd = useCallback(async () => {
-    try {
-      setLoadingJd(true);
-      const data = await documentApi.getJd();
-      if (data.success && data.document) {
-        setSavedJd(data.document);
-      } else {
-        setSavedJd(null);
-      }
-    } catch {
-      setSavedJd(null);
-    } finally {
-      setLoadingJd(false);
-    }
-  }, []);
-
   useEffect(() => {
-    checkResumeStatus();
-    loadSavedJd();
-  }, [checkResumeStatus, loadSavedJd]);
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const data = await documentApi.getJd();
+        if (cancelled) return;
+
+        if (data.success && data.document) {
+          setSavedJd(data.document);
+        } else {
+          setSavedJd(null);
+        }
+      } catch {
+        if (!cancelled) {
+          setSavedJd(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingJd(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleJdTextUpload = async () => {
     if (!jdUploadText.trim() || jdUploadText.trim().length < 50) {
